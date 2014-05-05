@@ -1,0 +1,12 @@
+BEFORE START THE PROGRAM CREATE TEST DATABASE WITH THE FOLLOW COMMANDS
+
+psql -U  postgresql
+
+IF CONNECTION SUCESS YOU GET "postgres=#" PROMPT
+
+create user test with password 'test';
+create database test owner test;
+\q
+
+
+psql -U test -W test < sql/test.sql

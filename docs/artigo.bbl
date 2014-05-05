@@ -1,0 +1,18 @@
+\providecommand{\abntreprintinfo}[1]{%
+ \citeonline{#1}}
+\setlength{\labelsep}{0pt}\begin{thebibliography}{}
+\providecommand{\abntrefinfo}[3]{}
+\providecommand{\abntbstabout}[1]{}
+\abntbstabout{1.53 }
+
+\bibitem[Kossmann 2000]{kossmann2000state}
+\abntrefinfo{Kossmann}{KOSSMANN}{2000}
+{KOSSMANN, D. The state of the art in distributed query processing.
+\emph{ACM Computing Surveys (CSUR)}, ACM, v.~32, n.~4, p. 422--469, 2000.}
+
+\bibitem[Lin et al. 2011]{lin2011tenzing}
+\abntrefinfo{Lin et al.}{LIN et al.}{2011}
+{LIN, L. et al. Tenzing a sql implementation on the mapreduce framework.
+Citeseer, 2011.}
+
+\end{thebibliography}
