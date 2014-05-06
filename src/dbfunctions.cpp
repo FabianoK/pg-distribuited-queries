@@ -3,6 +3,8 @@
 #include <pthread.h> 
 #include "constants.h"
 #include "remote_execution.h"
+#include <sys/time.h>
+
 
 using namespace std;
 
@@ -24,7 +26,7 @@ void DBFunctions::executeRemoteQuery(string query, bool print){
 		r->id = cfg->getId();
 		pthread_t t;
 		pthread_create(&t, NULL, &DBFunctions::executeRemote, r);
-		pthread_join(t, NULL);
+		//pthread_join(t, NULL);
 	}
 
 }
@@ -32,7 +34,8 @@ void DBFunctions::executeRemoteQuery(string query, bool print){
 
 void *DBFunctions::executeRemote(void *arg){
 
-
+	//struct timespec start, end;
+	struct timeval start, end;
 	//std::string *value = static_cast<std::string*>(arg);
 	RemoteExecution *re = static_cast<RemoteExecution *>(arg);
 
@@ -40,10 +43,19 @@ void *DBFunctions::executeRemote(void *arg){
 
 	db->connect(re->conn);
 
-	cout << "ID: "<< endl;
-	cout << re->id << endl;
+	//clock_gettime(CLOCK_REALTIME, &start);
+	gettimeofday(&start, NULL);
 	db->executeQuery(re->query, false);
+	//clock_gettime(CLOCK_REALTIME, &end);
+	gettimeofday(&end, NULL);
 	
+	cout << "ID " << re->id << endl;
+	double total = ( end.tv_sec - start.tv_sec )
+             + (double)( end.tv_usec - start.tv_usec )
+               / (double)1000;
+//end.tv_nsec - start.tv_nsec;
+	cout << total  << endl;
+
 	return NULL;
 
 }

@@ -10,7 +10,7 @@
 #ifndef _UTILS
 #include "utils.h"
 #endif
-
+#include <unistd.h>
 using namespace std;
 
 void organizeArgs(int argc, char **argv){
@@ -59,6 +59,8 @@ int main(int argc, char **argv){
 		cout << "Executando querie "+queries[i] << endl;
 		db->executeRemoteQuery(queries[i], false);
 	}
+
+	sleep(5);
 	//db->executeQuery("select test_id from test", true);
 	//Log::generateLog();
 
