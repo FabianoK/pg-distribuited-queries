@@ -76,9 +76,10 @@ void *DBFunctions::executeRemote(void *arg){
 	if(res->getClassType() == 2){
 		TestMap *tm = static_cast<TestMap *>(res->element_return);
 		tm->item.execution_time = total;
+		tm->item.id = re->id;
+		res->element_return = tm;
 
 	}
-	res->element_return;	
 	res->processReturn(re);
 	re->db_functions->finishExecutionQuery();
 	return NULL;
