@@ -6,7 +6,7 @@ using namespace std;
 Tests::Tests(){
 
 	db = new DBFunctions();
-        db->connect();
+        //db->connect();
 }
 
 bool Tests::confirmMessage(string message){
@@ -19,26 +19,38 @@ bool Tests::confirmMessage(string message){
 void Tests::insertValues(){
 
 	Config *c = Config::getInstance();
-	Tests *t = new Tests();	
 
-        int size = atoi(c->getConfig("size_table_test").c_str());
-	t->insertTest(size);
-        size = atoi(c->getConfig("size_table_test_child_1").c_str());
-	t->insertChild1 (size);
-        size = atoi(c->getConfig("size_table_test_child_blob").c_str());
-	t->insertBlob(size);
-        size = atoi(c->getConfig("size_table_test_child_multi_col").c_str());
-	t->insertMulti(size);
+	vector<string> dbs = c->getRemoteDatabases();
+	int size = dbs.size();
+	for(int i = 0; i < size; i++){
+		string host = dbs[i].substr(0, dbs[i].find(" user="));
+		if(!confirmMessage("Insert data in connection "+host))
+			continue;	
+
+		this->db->connect(dbs[i]);
+		int size = atoi(c->getConfig("size_table_test").c_str());
+		this->insertTest(size);
+		size = atoi(c->getConfig("size_table_test_child_1").c_str());
+		this->insertChild1 (size);
+		size = atoi(c->getConfig("size_table_test_child_blob").c_str());
+		this->insertBlob(size);
+		size = atoi(c->getConfig("size_table_test_child_multi_col").c_str());
+		this->insertMulti(size);
+	}
 }
 
 int Tests::removeValues(){
 	
-	Tests *t = new Tests();	
-
-	if(!Utils::confirmMessage("Remove data in all tables? "))
-		return 0;
-
-	return t->removeAll();
+	Config *c = Config::getInstance();
+	vector<string> dbs = c->getRemoteDatabases();
+	int size = dbs.size();
+	for(int i = 0; i < size; i++){
+		this->db->connect(dbs[i]);
+		string host = dbs[i].substr(0, dbs[i].find(" user="));
+		if(Utils::confirmMessage("Remove data in all tables? To conn "+host))
+			this->removeAll();
+	}
+	return 0;
 
 }
 

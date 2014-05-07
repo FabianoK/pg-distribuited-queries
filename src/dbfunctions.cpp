@@ -4,29 +4,51 @@
 #include "constants.h"
 #include "remote_execution.h"
 #include <sys/time.h>
-
+#include <unistd.h>
+#include "test_return_list.h"
 
 using namespace std;
 
+DBFunctions::DBFunctions(){
+	in_execution_queries = 0;;
+}
 
-void DBFunctions::executeRemoteQuery(string query, bool print){
+int DBFunctions::getInExecutionQueries(){
+	return in_execution_queries;
+}
+
+int DBFunctions::finishExecutionQuery(){
+	return --in_execution_queries;
+}
+
+void DBFunctions::waitingQueryExecution(){
+	while(1){
+		sleep(1);
+		//cout << this->getInExecutionQueries() << endl;
+		if(this->getInExecutionQueries() < 1)
+			return;
+	}
+
+}
+
+void DBFunctions::executeRemoteQuery(string query, Result *process_class,  bool print){
 
 	using namespace boost;
-
-	//this->executeQuery(query, print);
 
 	Config *cfg = Config::getInstance();
 	vector<string> db = cfg->getRemoteDatabases();
 	int vsize = db.size();
-	RemoteExecution *r = new RemoteExecution();
-	r->query = query;
-	r->db_functions = this;
+	pthread_t t[100];
 	for(int i = 0; i < vsize; i++){
+		RemoteExecution *r = new RemoteExecution();
+		r->query = query;
+		r->db_functions = this;
 		r->conn = db[i];
 		r->id = cfg->getId();
-		pthread_t t;
-		pthread_create(&t, NULL, &DBFunctions::executeRemote, r);
-		//pthread_join(t, NULL);
+		r->process_result = process_class;
+		cout << "Obtendo id " << r->id << endl;
+		in_execution_queries++;	
+		pthread_create(&t[i], NULL, &DBFunctions::executeRemote, r);
 	}
 
 }
@@ -34,28 +56,31 @@ void DBFunctions::executeRemoteQuery(string query, bool print){
 
 void *DBFunctions::executeRemote(void *arg){
 
-	//struct timespec start, end;
 	struct timeval start, end;
-	//std::string *value = static_cast<std::string*>(arg);
+
 	RemoteExecution *re = static_cast<RemoteExecution *>(arg);
 
 	DBFunctions *db = new DBFunctions();
 
 	db->connect(re->conn);
 
-	//clock_gettime(CLOCK_REALTIME, &start);
 	gettimeofday(&start, NULL);
 	db->executeQuery(re->query, false);
-	//clock_gettime(CLOCK_REALTIME, &end);
 	gettimeofday(&end, NULL);
 	
 	cout << "ID " << re->id << endl;
-	double total = ( end.tv_sec - start.tv_sec )
-             + (double)( end.tv_usec - start.tv_usec )
-               / (double)1000;
-//end.tv_nsec - start.tv_nsec;
+	double total = ((( end.tv_sec - start.tv_sec ) *1000000L)
+             + ((double)( end.tv_usec - start.tv_usec )))/1000000L;
 	cout << total  << endl;
+	Result *res = static_cast<Result *>(re->process_result);
+	if(res->getClassType() == 2){
+		TestMap *tm = static_cast<TestMap *>(res->element_return);
+		tm->item.execution_time = total;
 
+	}
+	res->element_return;	
+	res->processReturn(re);
+	re->db_functions->finishExecutionQuery();
 	return NULL;
 
 }

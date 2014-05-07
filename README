@@ -1,4 +1,5 @@
 BEFORE START THE PROGRAM CREATE TEST DATABASE WITH THE FOLLOW COMMANDS
+IN EACH HOST TO TESTS
 
 psql -U  postgresql
 
@@ -9,4 +10,10 @@ create database test owner test;
 \q
 
 
-psql -U test -W test < sql/test.sql
+psql -U test test < sql/test.sql
+
+
+YOU CAN USE THIS COMMAND REMOTE ADDITING PARAMETER -h IN COMMAND LINS
+
+psql -U test -h <remote host> < sql/test.sql
+

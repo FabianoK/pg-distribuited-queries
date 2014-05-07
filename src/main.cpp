@@ -11,6 +11,14 @@
 #include "utils.h"
 #endif
 #include <unistd.h>
+#ifndef _RESULT
+#include "result.h"
+#endif
+
+#include "test_return_list.h"
+#include <boost/foreach.hpp>
+#include <boost/range/adaptor/map.hpp>
+
 using namespace std;
 
 void organizeArgs(int argc, char **argv){
@@ -32,12 +40,13 @@ void organizeArgs(int argc, char **argv){
 
 int main(int argc, char **argv){
 	organizeArgs(argc, argv);
+	Tests *t = new Tests();
 	for (int i = 1; i < argc; ++i){ 
 		std::string arg = argv[i];
 		if(arg == "-c" || arg == "--create"){
-			Tests::insertValues(); 
+			t->insertValues(); 
 		}else if(arg == "-d" || arg == "--delete"){
-			Tests::removeValues(); 
+			t->removeValues(); 
 		}
 
 		if(!Utils::confirmMessage("Continue process")){
@@ -48,20 +57,32 @@ int main(int argc, char **argv){
 
 
 	DBFunctions *db = new DBFunctions();
-	//db->connect();
 
 	vector<string> queries = Utils::queriesToTest();
 	int size = queries.size();
 
-	
+	TestReturn *ret = new TestReturn();	
+	TestMap *tm = new TestMap();
+	ret->setElementReturn(tm);
 
 	for(int i = 0; i < size; i++){
 		cout << "Executando querie "+queries[i] << endl;
-		db->executeRemoteQuery(queries[i], false);
+		db->executeRemoteQuery(queries[i], ret, false);
 	}
 
-	sleep(5);
-	//db->executeQuery("select test_id from test", true);
-	//Log::generateLog();
+	db->waitingQueryExecution();
+
+	
+	map<long, TestList> values = tm->values;
+
+
+	BOOST_FOREACH(long s, values | boost::adaptors::map_keys) {
+		cout <<  s << " Valor\n";
+		TestList tl = values[s];
+		vector<ItemList> il = tl.values;
+		for(int i = 0; i < (int)il.size(); i++){
+			cout << "EXECUTION TIME "<< il[i].execution_time << endl;
+		}
+	}
 
 }
