@@ -46,7 +46,7 @@ void DBFunctions::executeRemoteQuery(string query, Result *process_class,  bool 
 		r->conn = db[i];
 		r->id = cfg->getId();
 		r->process_result = process_class;
-		cout << "Obtendo id " << r->id << endl;
+		//cout << "Obtendo id " << r->id << endl;
 		in_execution_queries++;	
 		pthread_create(&t[i], NULL, &DBFunctions::executeRemote, r);
 	}
@@ -65,18 +65,25 @@ void *DBFunctions::executeRemote(void *arg){
 	db->connect(re->conn);
 
 	gettimeofday(&start, NULL);
-	db->executeQuery(re->query, false);
+	PGresult *query = db->executeQuery(re->query, false);
 	gettimeofday(&end, NULL);
 	
-	cout << "ID " << re->id << endl;
+	//cout << "ID " << re->id << endl;
 	double total = ((( end.tv_sec - start.tv_sec ) *1000000L)
              + ((double)( end.tv_usec - start.tv_usec )))/1000000L;
-	cout << total  << endl;
+	//cout << total  << endl;
 	Result *res = static_cast<Result *>(re->process_result);
 	if(res->getClassType() == 2){
 		TestMap *tm = static_cast<TestMap *>(res->element_return);
 		tm->item.execution_time = total;
 		tm->item.id = re->id;
+		tm->item.host = re->conn;
+		gettimeofday(&start, NULL);
+		tm->item.table = db->joinTable(query);
+		gettimeofday(&end, NULL);
+		double total = ((( end.tv_sec - start.tv_sec ) *1000000L)
+             	+ ((double)( end.tv_usec - start.tv_usec )))/1000000L;
+		tm->item.local_process_time = total;
 		res->element_return = tm;
 
 	}
@@ -93,30 +100,16 @@ void DBFunctions::acceptRemote(){
 
 
 
-int DBFunctions::executeQuery(string query, bool print){
+PGresult *DBFunctions::executeQuery(string query, bool print){
 	PGresult *res;
 	res = PQexec(conn, query.c_str());
 	ExecStatusType status = PQresultStatus(res);
 	if (status != PGRES_COMMAND_OK && status != PGRES_TUPLES_OK){
 		cout << "ERROR: ";
 		cout << PQerrorMessage(conn) << endl;
-		return PQresultStatus(res);
 	}
 
-
-	if (print == true){
-		int i, j; 
-		int nTuples = PQntuples(res);
-		int nFields = PQnfields(res);
-			
-		for (i = 0; i < nTuples; i++){
-			for(j = 0; j < nFields; j++)
-				cout << PQgetvalue(res, i, j) << " | ";
-			cout << endl;
-		}
-	}
-	
-	return 0;
+	return res;
 	//PQfinish(conn);
 }
 
@@ -135,5 +128,39 @@ int DBFunctions::connect(string c){
 		cout << "Connection not established: "<< PQerrorMessage(conn) << endl;
 	
 	return result;
+
+}
+
+Table *DBFunctions::joinTable(PGresult *query){
+
+	int i, j, k=0;
+        int nTuples = PQntuples(query);
+        int nFields = PQnfields(query);
+	char *tst;
+
+	Table *t = new Table();
+
+        FieldDesc *fd = new FieldDesc();
+        for(j = 0; j < nFields; j++){
+                fd->name = PQfname(query, j);
+                fd->type = PQftype(query, j);
+                fd->size = PQfsize(query, j);
+                fd->index = PQfnumber(query, fd->name.c_str());
+                fd->header.push_back(*fd);
+        }
+
+        for (i = 0; i < nTuples; i++){
+                Record *rr = new Record();
+                for(j = 0; j < nFields; j++){
+                        k++;
+                        tst = PQgetvalue(query, i, j);
+                        rr->fields.push_back(tst);
+                }
+                t->records.push_back(*rr);
+        }
+
+	cout << t->records.size() << " | " << nTuples << endl;
+	return t;
+	
 
 }

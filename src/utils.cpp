@@ -6,6 +6,13 @@
 
 using namespace std;
 
+bool Utils::confirmMessage(string msg, bool confirm_all){
+	if(confirm_all){
+        	cout << msg +" [Y\\n]: Y";
+		return true;
+	}else
+		return this->confirmMessage(msg);
+		
 
 bool Utils::confirmMessage(string msg){
 	string confirm;

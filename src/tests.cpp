@@ -6,13 +6,19 @@ using namespace std;
 Tests::Tests(){
 
 	db = new DBFunctions();
+        confirmAll = false;
         //db->connect();
 }
 
+Tests::Tests(bool confirm){
+
+	db = new DBFunctions();
+        confirmAll = comfirm;
+}
 bool Tests::confirmMessage(string message){
 	string confirm;
 
-	return Utils::confirmMessage("Confirm insert values in table "+ message);
+	return Utils::confirmMessage("Confirm insert values in table "+ message, confirmAll);
 
 }
 
@@ -21,21 +27,32 @@ void Tests::insertValues(){
 	Config *c = Config::getInstance();
 
 	vector<string> dbs = c->getRemoteDatabases();
+	string master = c->getConfig("master_host");
 	int size = dbs.size();
+
+
 	for(int i = 0; i < size; i++){
+		int adjust_size = 1;
 		string host = dbs[i].substr(0, dbs[i].find(" user="));
 		if(!confirmMessage("Insert data in connection "+host))
 			continue;	
 
+		if((int)host.find(master) >= 0){ 
+			adjust_size = size;
+
+			if(!confirmMessage("The host "+master+ " is master, continue?"))
+				continue;	
+
+		}
 		this->db->connect(dbs[i]);
-		int size = atoi(c->getConfig("size_table_test").c_str());
-		this->insertTest(size);
-		size = atoi(c->getConfig("size_table_test_child_1").c_str());
-		this->insertChild1 (size);
-		size = atoi(c->getConfig("size_table_test_child_blob").c_str());
-		this->insertBlob(size);
-		size = atoi(c->getConfig("size_table_test_child_multi_col").c_str());
-		this->insertMulti(size);
+		int rec_size = atoi(c->getConfig("size_table_test").c_str());
+		this->insertTest(rec_size * adjust_size);
+		rec_size = atoi(c->getConfig("size_table_test_child_1").c_str());
+		this->insertChild1 (rec_size * adjust_size);
+		rec_size = atoi(c->getConfig("size_table_test_child_blob").c_str());
+		this->insertBlob(rec_size * adjust_size);
+		rec_size = atoi(c->getConfig("size_table_test_child_multi_col").c_str());
+		this->insertMulti(rec_size * adjust_size);
 	}
 }
 
@@ -59,15 +76,15 @@ int Tests::removeAll(){
 	int ret = 0;
 
 	string del = "delete from test";
-	ret += db->executeQuery(del.c_str(), false);
+	db->executeQuery(del.c_str(), false);
 	cout << "Clead table test" << endl;
 
 	del = "delete from test_child_1";
-	ret += db->executeQuery(del.c_str(), false);
+	db->executeQuery(del.c_str(), false);
 	cout << "Clead table child 1" << endl;
 
 	del = "delete from test_child_multi_col";
-	ret += db->executeQuery(del.c_str(), false);
+	db->executeQuery(del.c_str(), false);
 	cout << "Clead table child multi" << endl;
 
 	return ret;
@@ -92,7 +109,7 @@ void Tests::insertTest(int size){
 		tmp = tmp + query;
 		if((i % 500) == 0 || (i + 1) == size){
 			query = insert + "values" +tmp;
-			if(db->executeQuery(query.c_str(), false) != 0)
+			if(PQresultStatus(db->executeQuery(query.c_str(), false)) != PGRES_COMMAND_OK)
 				return;
 			tmp ="";
 			cout << "Inserting record: " << i << endl;
@@ -115,12 +132,12 @@ void Tests::insertChild1(int size){
 	for(int i = 0; i < size; i++){
 		char values[1000];
 		sprintf(values, "(%i, 'the string with value %i', 'the string with other value %i')", 
-				(int)i/(parentSize) + 1, i, i);
+				(int)rand() % parentSize + 1, i, i);
 		string query(values);
 		tmp = tmp + query;
 		if((i % 500) == 0 || (i + 1) == size){
 			query = insert + "values" +tmp;
-			if(db->executeQuery(query.c_str(), false) != 0)
+			if(PQresultStatus(db->executeQuery(query.c_str(), false)) != PGRES_COMMAND_OK)
 				return;
 			tmp ="";
 			cout << "Inserting record: " << i << endl;
@@ -151,12 +168,12 @@ void Tests::insertMulti(int size){
 			'the value %i', 'the string3  with other value %i', \
 			'the value %i', 'the value %i', \
 			'the string6 with other value %i', %i, %i, %i, %i, %i, %f, %f, %f)", 
-			(int)i/(parentSize) + 1, i, i, i, i, i, i, i, i, i ,i, i, i, (float)i, (float)i, (float)i);
+			(int)rand() % parentSize + 1, i, i, i, i, i, i, i, i, i ,i, i, i, (float)i, (float)i, (float)i);
 		string query(values);
 		tmp = tmp + query;
 		if((i % 500) == 0 || (i + 1) == size){
 			query = insert + "values" +tmp;
-			if(db->executeQuery(query.c_str(), false) != 0)
+			if(PQresultStatus(db->executeQuery(query.c_str(), false)) != PGRES_COMMAND_OK)
 				return;
 			tmp ="";
 			cout << "Inserting record: " << i << endl;

@@ -17,4 +17,5 @@ class Tests{
 	private:
 		DBFunctions *db;
 		int removeAll();
+		bool confirmAll;
 };

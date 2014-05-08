@@ -21,11 +21,14 @@
 
 using namespace std;
 
-void organizeArgs(int argc, char **argv){
+int organizeArgs(int argc, char **argv){
 	char *tmp;
 	int in_pos = -1;
+	ret = 0;
 	for(int i = 1; i < argc; i++){
 		std::string arg = argv[i];
+		if(arg == "-i" || arg == "--ignoreconfirms")
+			ret = 1;
 		if((arg == "-d" || arg == "--delete") && in_pos >= 0){
 			tmp = argv[in_pos];
 			argv[in_pos] = argv[i];
@@ -35,12 +38,16 @@ void organizeArgs(int argc, char **argv){
 			in_pos = i;
 		}
 	}
-
+	ret;
 }
 
 int main(int argc, char **argv){
-	organizeArgs(argc, argv);
-	Tests *t = new Tests();
+	Tests *t;
+	if(organizeArgs(argc, argv) == 1)
+		t = new Tests(true);
+	else
+		t = new Tests();
+
 	for (int i = 1; i < argc; ++i){ 
 		std::string arg = argv[i];
 		if(arg == "-c" || arg == "--create"){
@@ -73,15 +80,16 @@ int main(int argc, char **argv){
 	db->waitingQueryExecution();
 
 	
-	map<long, TestList> values = tm->values;
+	map<string, TestList> values = tm->values;
 
 
-	BOOST_FOREACH(long s, values | boost::adaptors::map_keys) {
+	BOOST_FOREACH(string s, values | boost::adaptors::map_keys) {
 		cout <<  s << " Valor\n";
 		TestList tl = values[s];
 		vector<ItemList> il = tl.values;
 		for(int i = 0; i < (int)il.size(); i++){
-			cout << "EXECUTION TIME "<< il[i].execution_time << endl;
+			string host = il[i].host.substr(0, il[i].host.find(" user="));
+			cout << "TABLE SIZE: "<<  il[i].table->records.size() <<  " EX. TIME: "<< il[i].execution_time << " TIME LOCAL: " << il[i].local_process_time << " HOST: "<< host << " ID: "<< il[i].id << endl;
 		}
 	}
 
