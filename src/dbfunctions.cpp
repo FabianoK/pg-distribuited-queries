@@ -23,7 +23,9 @@ int DBFunctions::getInExecutionQueries(){
 }
 
 int DBFunctions::finishExecutionQuery(){
+	pthread_mutex_lock(&count_mutex);
 	return --in_execution_queries;
+	pthread_mutex_unlock(&count_mutex);
 }
 
 void DBFunctions::waitingQueryExecution(){
@@ -52,7 +54,9 @@ void DBFunctions::executeRemoteQuery(string query, Result *process_class,  bool 
 		r->id = cfg->getId();
 		r->process_result = process_class;
 		//cout << "Obtendo id " << r->id << endl;
+		pthread_mutex_lock(&count_mutex);
 		in_execution_queries++;	
+		pthread_mutex_unlock(&count_mutex);
 		pthread_create(&t[i], NULL, &DBFunctions::executeRemote, r);
 	}
 

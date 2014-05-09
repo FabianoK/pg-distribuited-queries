@@ -20,6 +20,8 @@ class DBFunctions{
 	private:
 		PGconn *conn;
 		int in_execution_queries;
+		pthread_mutex_t count_mutex;
+		pthread_mutex_t table_mutex;
 	public:
 		DBFunctions();
 		~DBFunctions();
