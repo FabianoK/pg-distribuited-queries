@@ -1,6 +1,9 @@
+#ifndef _LOG
+#define _LOG 1
+
 class Log{
 	public:
-		static void generateLog();
+		static void log(short, string);
 		void log();
 	private:
 		int logLevel;
@@ -9,3 +12,5 @@ class Log{
 		void getConfig();
 	
 };
+
+#endif

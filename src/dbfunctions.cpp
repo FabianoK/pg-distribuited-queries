@@ -6,8 +6,13 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include "test_return_list.h"
+#include "log.h"
 
 using namespace std;
+
+DBFunctions::~DBFunctions(){
+	free(conn);
+}
 
 DBFunctions::DBFunctions(){
 	in_execution_queries = 0;;
@@ -65,22 +70,30 @@ void *DBFunctions::executeRemote(void *arg){
 	db->connect(re->conn);
 
 	gettimeofday(&start, NULL);
+
 	PGresult *query = db->executeQuery(re->query, false);
+
 	gettimeofday(&end, NULL);
 	
-	//cout << "ID " << re->id << endl;
 	double total = ((( end.tv_sec - start.tv_sec ) *1000000L)
              + ((double)( end.tv_usec - start.tv_usec )))/1000000L;
-	//cout << total  << endl;
+	
 	Result *res = static_cast<Result *>(re->process_result);
+
 	if(res->getClassType() == 2){
 		TestMap *tm = static_cast<TestMap *>(res->element_return);
 		tm->item.execution_time = total;
 		tm->item.id = re->id;
 		tm->item.host = re->conn;
+		tm->item.records_returned = PQntuples(query);
 		gettimeofday(&start, NULL);
-		tm->item.table = db->joinTable(query);
+		Config *c = Config::getInstance();
+		
+		if((int)re->conn.find(c->getConfig("master_host")) < 0)
+			tm->item.table = db->joinTable(query, tm->values[re->query].values);
+
 		gettimeofday(&end, NULL);
+
 		double total = ((( end.tv_sec - start.tv_sec ) *1000000L)
              	+ ((double)( end.tv_usec - start.tv_usec )))/1000000L;
 		tm->item.local_process_time = total;
@@ -89,6 +102,8 @@ void *DBFunctions::executeRemote(void *arg){
 	}
 	res->processReturn(re);
 	re->db_functions->finishExecutionQuery();
+
+	free(query);
 	return NULL;
 
 }
@@ -131,14 +146,19 @@ int DBFunctions::connect(string c){
 
 }
 
-Table *DBFunctions::joinTable(PGresult *query){
+Table *DBFunctions::joinTable(PGresult *query, vector<ItemList> items){
 
 	int i, j, k=0;
         int nTuples = PQntuples(query);
         int nFields = PQnfields(query);
 	char *tst;
 
-	Table *t = new Table();
+	Table *t;
+	if(items.size() < 1)
+		t = new Table();
+	else
+		t = items[0].table;
+
 
         FieldDesc *fd = new FieldDesc();
         for(j = 0; j < nFields; j++){
@@ -148,6 +168,8 @@ Table *DBFunctions::joinTable(PGresult *query){
                 fd->index = PQfnumber(query, fd->name.c_str());
                 fd->header.push_back(*fd);
         }
+
+	free(fd);
 
         for (i = 0; i < nTuples; i++){
                 Record *rr = new Record();
@@ -159,7 +181,7 @@ Table *DBFunctions::joinTable(PGresult *query){
                 t->records.push_back(*rr);
         }
 
-	cout << t->records.size() << " | " << nTuples << endl;
+	//Log::log(DEBUG, t->records.size() + " | " + nTuples);
 	return t;
 	
 

@@ -6,6 +6,7 @@ class Tests{
 
 	public:
 		Tests();
+		Tests(bool);
 		void insertValues();
 		void insertTest(int);
 		void insertChild1(int);

@@ -13,7 +13,7 @@ Tests::Tests(){
 Tests::Tests(bool confirm){
 
 	db = new DBFunctions();
-        confirmAll = comfirm;
+        confirmAll = confirm;
 }
 bool Tests::confirmMessage(string message){
 	string confirm;
@@ -23,7 +23,6 @@ bool Tests::confirmMessage(string message){
 }
 
 void Tests::insertValues(){
-
 	Config *c = Config::getInstance();
 
 	vector<string> dbs = c->getRemoteDatabases();
@@ -38,7 +37,7 @@ void Tests::insertValues(){
 			continue;	
 
 		if((int)host.find(master) >= 0){ 
-			adjust_size = size;
+			adjust_size = size -1;
 
 			if(!confirmMessage("The host "+master+ " is master, continue?"))
 				continue;	
@@ -64,7 +63,7 @@ int Tests::removeValues(){
 	for(int i = 0; i < size; i++){
 		this->db->connect(dbs[i]);
 		string host = dbs[i].substr(0, dbs[i].find(" user="));
-		if(Utils::confirmMessage("Remove data in all tables? To conn "+host))
+		if(Utils::confirmMessage("Remove data in all tables? To conn "+host, this->confirmAll))
 			this->removeAll();
 	}
 	return 0;

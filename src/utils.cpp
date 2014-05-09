@@ -8,11 +8,12 @@ using namespace std;
 
 bool Utils::confirmMessage(string msg, bool confirm_all){
 	if(confirm_all){
-        	cout << msg +" [Y\\n]: Y";
+        	cout << msg +" [Y\\n]: Y" <<endl;
 		return true;
 	}else
-		return this->confirmMessage(msg);
+		return Utils::confirmMessage(msg);
 		
+}
 
 bool Utils::confirmMessage(string msg){
 	string confirm;

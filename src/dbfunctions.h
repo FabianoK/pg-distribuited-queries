@@ -11,6 +11,7 @@
 #include <vector>
 #include <libpq-fe.h>
 #include "dbtypes.h"
+#include "test_return_list.h"
 
 using namespace std;
 
@@ -21,6 +22,7 @@ class DBFunctions{
 		int in_execution_queries;
 	public:
 		DBFunctions();
+		~DBFunctions();
 		PGresult *executeQuery(string, bool);
 		void executeRemoteQuery(string, Result *, bool);
 		static void *executeRemote(void *);
@@ -30,5 +32,5 @@ class DBFunctions{
 		int connect();
 		int getInExecutionQueries();
 		int finishExecutionQuery();
-		Table *joinTable(PGresult *);
+		Table *joinTable(PGresult *, vector<ItemList>);
 };
