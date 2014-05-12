@@ -21,7 +21,6 @@ class DBFunctions{
 		PGconn *conn;
 		int in_execution_queries;
 		pthread_mutex_t count_mutex;
-		pthread_mutex_t table_mutex;
 	public:
 		DBFunctions();
 		~DBFunctions();
@@ -34,5 +33,5 @@ class DBFunctions{
 		int connect();
 		int getInExecutionQueries();
 		int finishExecutionQuery();
-		Table *joinTable(PGresult *, vector<ItemList>);
+		Table *joinTable(PGresult *, TestMap *, string);
 };

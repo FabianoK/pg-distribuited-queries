@@ -89,10 +89,8 @@ int main(int argc, char **argv){
 
 	db->waitingQueryExecution();
 
-	
 
 	map<string, TestList> values = tm->values;
-
 
 	BOOST_FOREACH(string s, values | boost::adaptors::map_keys) {
 		cout <<  s << " Valor\n";
