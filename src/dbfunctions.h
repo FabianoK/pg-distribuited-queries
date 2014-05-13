@@ -2,16 +2,12 @@
 #define _DB_FUNCTIONS 1
 #endif
 
-#ifndef _RESULT
-#include "result.h"
-#endif
-
 #include <cstdlib>
 #include <iostream>
 #include <vector>
 #include <libpq-fe.h>
 #include "dbtypes.h"
-#include "test_return_list.h"
+#include "data_return.h"
 
 using namespace std;
 
@@ -21,11 +17,12 @@ class DBFunctions{
 		PGconn *conn;
 		int in_execution_queries;
 		pthread_mutex_t count_mutex;
+		pthread_mutex_t insert_mutex;
 	public:
 		DBFunctions();
 		~DBFunctions();
 		PGresult *executeQuery(string, bool);
-		void executeRemoteQuery(string, Result *, bool);
+		void executeRemoteQuery(string, DataReturn *, bool);
 		static void *executeRemote(void *);
 		void waitingQueryExecution();
 		void acceptRemote();
@@ -33,5 +30,5 @@ class DBFunctions{
 		int connect();
 		int getInExecutionQueries();
 		int finishExecutionQuery();
-		Table *joinTable(PGresult *, TestMap *, string);
+		void joinTable(PGresult *, DataReturn *);
 };

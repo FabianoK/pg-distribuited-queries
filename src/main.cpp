@@ -1,21 +1,10 @@
 #include <cstdlib>
 #include <iostream>
-
-#ifndef _DB_FUNCTIONS
 #include "dbfunctions.h"
-#endif
-
-#include "log.h"
-#include "tests.h"
-#ifndef _UTILS
 #include "utils.h"
-#endif
+#include "tests.h"
+#include "data_return.h"
 #include <unistd.h>
-#ifndef _RESULT
-#include "result.h"
-#endif
-
-#include "test_return_list.h"
 #include <boost/foreach.hpp>
 #include <boost/range/adaptor/map.hpp>
 
@@ -77,9 +66,14 @@ int main(int argc, char **argv){
 	vector<string> queries = Utils::queriesToTest();
 	int size = queries.size();
 
-	TestReturn *ret = new TestReturn();	
-	TestMap *tm = new TestMap();
-	ret->setElementReturn(tm);
+
+	DataReturn *ret = new DataReturn();	
+	Table *tm = new Table();
+
+	ret->table = tm;
+	cout << tm << endl;
+		
+	//ret->setElementReturn(tm);
 	for(int i = 0; i < size; i++){
 		cout << "Executando querie "+queries[i] << endl;
 		db->executeRemoteQuery(queries[i], ret, false);
@@ -89,9 +83,14 @@ int main(int argc, char **argv){
 
 	db->waitingQueryExecution();
 
+	vector<Item> values = ret->items;
+	
+	int vsize = (int)values.size();
 
-	map<string, TestList> values = tm->values;
+	for(int i=0; i < vsize; i++)
+		cout << values[i].conn_string << endl;
 
+	/*
 	BOOST_FOREACH(string s, values | boost::adaptors::map_keys) {
 		cout <<  s << " Valor\n";
 		TestList tl = values[s];
@@ -102,7 +101,7 @@ int main(int argc, char **argv){
 			//cout << "TABLE TOTAL SIZE: "<<  il[i].table->records.size() << " TABLE SIZE: "<< il[i].records_returned <<  " EX. TIME: "<< il[i].execution_time << " TIME LOCAL: " << il[i].local_process_time << " HOST: "<< host << " ID: "<< il[i].id << endl;
 		}
 	}
-
+	*/
 	free(tm);
 	free(ret);
 }

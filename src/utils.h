@@ -1,6 +1,5 @@
 #ifndef _UTILS
 #define _UTILS 1
-#endif
 #include <vector>
 #include <cstdlib>
 #include <iostream>
@@ -18,3 +17,5 @@ class Utils{
 		vector<string> dbs_info;
 		string makeConnectionString(vector<string>);
 };
+
+#endif

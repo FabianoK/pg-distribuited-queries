@@ -2,11 +2,9 @@
 #include "config.h" 
 #include <pthread.h> 
 #include "constants.h"
-#include "remote_execution.h"
 #include <sys/time.h>
 #include <unistd.h>
-#include "test_return_list.h"
-#include "log.h"
+#include "thread_execution_item.h"
 
 using namespace std;
 
@@ -79,7 +77,7 @@ int DBFunctions::connect(string c){
 
 
 
-void DBFunctions::executeRemoteQuery(string query, Result *process_class,  bool print){
+void DBFunctions::executeRemoteQuery(string query, DataReturn *data_return,  bool print){
 
 	using namespace boost;
 
@@ -87,18 +85,21 @@ void DBFunctions::executeRemoteQuery(string query, Result *process_class,  bool 
 	vector<string> db = cfg->getRemoteDatabases();
 	int vsize = db.size();
 	pthread_t t[100];
+
+	data_return->dbfunction = this;
+	data_return->query = query;
 	for(int i = 0; i < vsize; i++){
-		RemoteExecution *r = new RemoteExecution();
-		r->query = query;
-		r->db_functions = this;
-		r->conn = db[i];
-		r->id = cfg->getId();
-		r->process_result = process_class;
+		ThreadExecutionItem *thread_item = new ThreadExecutionItem();
+		Item *item = new Item();
+		item->conn_string = db[i];
+		item->id = cfg->getId();
+		thread_item->item = *item;
+		thread_item->data_return = data_return;
 		pthread_mutex_lock(&count_mutex);
-		//cout << "Obtendo id " << r->id << endl;
 		in_execution_queries++;
 		pthread_mutex_unlock(&count_mutex);
-		pthread_create(&t[i], NULL, &DBFunctions::executeRemote, r);
+		data_return->dbfunction = this; 
+		pthread_create(&t[i], NULL, &DBFunctions::executeRemote, thread_item);
 	}
 
 }
@@ -108,54 +109,49 @@ void *DBFunctions::executeRemote(void *arg){
 
 	struct timeval start, end;
 
-	RemoteExecution *re = static_cast<RemoteExecution *>(arg);
+	ThreadExecutionItem *te = static_cast<ThreadExecutionItem *>(arg);
+
+	Item item = te->item;
+	DataReturn *data_return = te->data_return;
 
 	DBFunctions *db = new DBFunctions();
 
-	db->connect(re->conn);
+	db->connect(item.conn_string);
 
 
 	gettimeofday(&start, NULL);
 
-	PGresult *query = db->executeQuery(re->query, false);
+	PGresult *query = db->executeQuery(te->data_return->query, false);
 
 	gettimeofday(&end, NULL);
 	
 	double total = ((( end.tv_sec - start.tv_sec ) *1000000L)
              + ((double)( end.tv_usec - start.tv_usec )))/1000000L;
-	
-	Result *res = static_cast<Result *>(re->process_result);
-	
-	if(res->getClassType() == 2){
-		TestMap *tm = static_cast<TestMap *>(res->element_return);
-		tm->item.execution_time = total;
-		tm->item.id = re->id;
-		tm->item.host = re->conn;
-		tm->item.records_returned = PQntuples(query);
-		gettimeofday(&start, NULL);
-		//Config *c = Config::getInstance();
-		
-		//if((int)re->conn.find(c->getConfig("master_host")) < 0)
-		cout << "Bf " << re->id << endl;;
-		//tm->item.table = db->joinTable(query, tm, re->query); // tm->values[re->query].values);
-		db->joinTable(query, tm, re->query); // tm->values[re->query].values);
-		gettimeofday(&end, NULL);
 
-		double total = ((( end.tv_sec - start.tv_sec ) *1000000L)
-             	+ ((double)( end.tv_usec - start.tv_usec )))/1000000L;
-		tm->item.local_process_time = total;
-		res->element_return = tm;
 
-	}
-	//res->processReturn(re);
-	re->db_functions->finishExecutionQuery();
+	
+	item.records_returned = PQntuples(query);
+	gettimeofday(&start, NULL);
+	
+	db->joinTable(query, data_return);
+	gettimeofday(&end, NULL);
+
+	total = ((( end.tv_sec - start.tv_sec ) *1000000L)
+	+ ((double)( end.tv_usec - start.tv_usec )))/1000000L;
+	item.local_process_time = total;
+
+
+
+	(static_cast<DBFunctions *>(data_return->dbfunction))->finishExecutionQuery();
+
+	data_return->items.push_back(item);
 
 	free(query);
 	return NULL;
 
 }
 
-Table *DBFunctions::joinTable(PGresult *query, TestMap *tm, string query_str){
+void DBFunctions::joinTable(PGresult *query, DataReturn *data_return){
 
 	int i, j, k=0;
         int nTuples = PQntuples(query);
@@ -164,23 +160,9 @@ Table *DBFunctions::joinTable(PGresult *query, TestMap *tm, string query_str){
 
 	
 
-	cout << query_str << endl;
 
-	Table *t;
-	TestList itens	= tm->values[query_str];
-	if(itens.values.size() < 1){
-		t = new Table();
-		tm->item.table = t;
-		itens.values.push_back(tm->item);
-		cout << t << endl;
-	}else{
-		t = itens.values[0].table;
-		cout << t << endl;
+	Table *t = data_return->table;
 
-	}
-
-	cout << "ITEM ID " << endl;;
-	cout << tm->item.id << endl;
 
         FieldDesc *fd = new FieldDesc();
         for(j = 0; j < nFields; j++){
@@ -193,6 +175,7 @@ Table *DBFunctions::joinTable(PGresult *query, TestMap *tm, string query_str){
 
 	free(fd);
 	
+	cout << t << endl;
         for (i = 0; i < nTuples; i++){
                 Record *rr = new Record();
                 for(j = 0; j < nFields; j++){
@@ -200,10 +183,8 @@ Table *DBFunctions::joinTable(PGresult *query, TestMap *tm, string query_str){
                         tst = PQgetvalue(query, i, j);
                         rr->fields.push_back(tst);
                 }
+		pthread_mutex_lock(&insert_mutex);
                 t->records.push_back(*rr);
+		pthread_mutex_unlock(&insert_mutex);
         }
-	//Log::log(DEBUG, t->records.size() + " | " + nTuples);
-	return t;
-	
-
 }

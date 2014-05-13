@@ -1,9 +1,8 @@
+#ifndef _CONFIG
 #define _CONFIG 1
 #include <cstdlib>
 #include <boost/property_tree/ptree.hpp>
-#ifndef _UTILS
 #include "utils.h"
-#endif
 #define CONFIGFILE = sharding.conf
 
 
@@ -29,3 +28,4 @@ class Config{
 
 };
 
+#endif
