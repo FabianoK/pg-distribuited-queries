@@ -132,8 +132,10 @@ void *DBFunctions::executeRemote(void *arg){
 	
 	item.records_returned = PQntuples(query);
 	gettimeofday(&start, NULL);
+
+	item.table = new Table();
 	
-	db->joinTable(query, data_return);
+	db->loadTable(query, item.table);
 	gettimeofday(&end, NULL);
 
 	total = ((( end.tv_sec - start.tv_sec ) *1000000L)
@@ -151,7 +153,7 @@ void *DBFunctions::executeRemote(void *arg){
 
 }
 
-void DBFunctions::joinTable(PGresult *query, DataReturn *data_return){
+void DBFunctions::loadTable(PGresult *query, Table *t){
 
 	int i, j, k=0;
         int nTuples = PQntuples(query);
@@ -161,8 +163,7 @@ void DBFunctions::joinTable(PGresult *query, DataReturn *data_return){
 	
 
 
-	Table *t = data_return->table;
-
+	//Table *t = data_return->table;
 
         FieldDesc *fd = new FieldDesc();
         for(j = 0; j < nFields; j++){
@@ -170,12 +171,11 @@ void DBFunctions::joinTable(PGresult *query, DataReturn *data_return){
                 fd->type = PQftype(query, j);
                 fd->size = PQfsize(query, j);
                 fd->index = PQfnumber(query, fd->name.c_str());
-                fd->header.push_back(*fd);
+                t->header.push_back(*fd);
         }
 
 	free(fd);
 	
-	cout << t << endl;
         for (i = 0; i < nTuples; i++){
                 Record *rr = new Record();
                 for(j = 0; j < nFields; j++){
@@ -183,8 +183,6 @@ void DBFunctions::joinTable(PGresult *query, DataReturn *data_return){
                         tst = PQgetvalue(query, i, j);
                         rr->fields.push_back(tst);
                 }
-		pthread_mutex_lock(&insert_mutex);
                 t->records.push_back(*rr);
-		pthread_mutex_unlock(&insert_mutex);
         }
 }

@@ -111,12 +111,13 @@ void Tests::insertTest(int size){
 			if(PQresultStatus(db->executeQuery(query.c_str(), false)) != PGRES_COMMAND_OK)
 				return;
 			tmp ="";
-			cout << "Inserting record: " << i << endl;
+			cout << "\rInserting record: " << i;
 
 		}else{
 			tmp += ',';
 		}
 	}
+	cout << endl;
 }
 
 void Tests::insertChild1(int size){
@@ -139,11 +140,13 @@ void Tests::insertChild1(int size){
 			if(PQresultStatus(db->executeQuery(query.c_str(), false)) != PGRES_COMMAND_OK)
 				return;
 			tmp ="";
-			cout << "Inserting record: " << i << endl;
+			cout << "\rInserting record: " << i;
 
 		}else
 			tmp += ',';
 	}
+
+	cout << endl;
 }
 
 void Tests::insertBlob(int size){
@@ -175,11 +178,13 @@ void Tests::insertMulti(int size){
 			if(PQresultStatus(db->executeQuery(query.c_str(), false)) != PGRES_COMMAND_OK)
 				return;
 			tmp ="";
-			cout << "Inserting record: " << i << endl;
+			cout << "\rInserting record: " << i;
 
 		}else
 			tmp += ',';
 	}
+
+	cout << endl;
 
 
 }

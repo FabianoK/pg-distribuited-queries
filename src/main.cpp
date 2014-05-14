@@ -71,9 +71,7 @@ int main(int argc, char **argv){
 	Table *tm = new Table();
 
 	ret->table = tm;
-	cout << tm << endl;
 		
-	//ret->setElementReturn(tm);
 	for(int i = 0; i < size; i++){
 		cout << "Executando querie "+queries[i] << endl;
 		db->executeRemoteQuery(queries[i], ret, false);
@@ -86,10 +84,20 @@ int main(int argc, char **argv){
 	vector<Item> values = ret->items;
 	
 	int vsize = (int)values.size();
+	vector<FieldDesc> f = values[0].table->header;	
+	int hsize = (int)f.size();
 
-	for(int i=0; i < vsize; i++)
-		cout << values[i].conn_string << endl;
+	for(int i = 0;i < hsize; i++)
+		cout << f[i].name << "|" << f[i].type << "|" << f[i].size << ";";
 
+	cout << endl;
+
+
+	for(int i=0; i < vsize; i++){
+		Item it = values[i];
+		string host = it.conn_string.substr(0, it.conn_string.find(" user="));
+		cout << host << ";"<< it.execution_time << ";" << it.local_process_time << ";" << it.records_returned << endl;
+	}
 	/*
 	BOOST_FOREACH(string s, values | boost::adaptors::map_keys) {
 		cout <<  s << " Valor\n";

@@ -30,5 +30,5 @@ class DBFunctions{
 		int connect();
 		int getInExecutionQueries();
 		int finishExecutionQuery();
-		void joinTable(PGresult *, DataReturn *);
+		void loadTable(PGresult *, Table *);
 };

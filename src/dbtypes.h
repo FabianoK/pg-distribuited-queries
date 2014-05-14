@@ -10,7 +10,6 @@ class FieldDesc{
                 int type;
                 int size;
                 int index;
-                vector<FieldDesc> header;
 };
 
 class Record{
@@ -20,6 +19,7 @@ class Record{
 
 class Table{
         public:
+                vector<FieldDesc> header;
                 vector<Record> records;
 };
 
