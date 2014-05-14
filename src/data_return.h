@@ -6,6 +6,7 @@
 #endif
 #include <vector>
 #include "item.h"
+#include <unistd.h>
 
 using namespace std;
 
@@ -14,6 +15,8 @@ class DataReturn{
 		vector<Item> items;
 		Table *table;
 		string query;
+		struct timeval start_execution_time;
+		struct timeval end_execution_time;
 		void *dbfunction;
 };
 

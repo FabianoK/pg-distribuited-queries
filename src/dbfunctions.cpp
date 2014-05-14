@@ -8,41 +8,35 @@
 
 using namespace std;
 
+pthread_mutex_t item_mutex;
+int values;
 
 DBFunctions::~DBFunctions(){
-	free(conn);
+	values = 0;
 }
 
 DBFunctions::DBFunctions(){
-	in_execution_queries = 0;;
-}
-
-int DBFunctions::getInExecutionQueries(){
-	return in_execution_queries;
-}
-
-int DBFunctions::finishExecutionQuery(){
-	int ret;
-	pthread_mutex_lock(&count_mutex);
-	ret = --in_execution_queries;
-	pthread_mutex_unlock(&count_mutex);
-	return ret;
-}
-
-void DBFunctions::waitingQueryExecution(){
-	while(1){
-		sleep(1);
-		if(this->getInExecutionQueries() < 1)
-			return;
-	}
-
 }
 
 void DBFunctions::acceptRemote(){
 
 }
 
+vector<Record> DBFunctions::merge(DataReturn *ret){
 
+	int vsize = (int)ret->items.size();
+	vector<Record> join =  ret->items[0].table->records;
+
+	for(int i=1; i < vsize; i++){
+                vector<Record> tmp = ret->items[i].table->records;
+                int tmp_size = tmp.size();
+
+                for(int j = 0; j < tmp_size; j++)
+                        join.push_back(tmp[j]);
+        }
+
+	return join;
+}
 
 PGresult *DBFunctions::executeQuery(string query, bool print){
 	PGresult *res;
@@ -54,7 +48,6 @@ PGresult *DBFunctions::executeQuery(string query, bool print){
 	}
 
 	return res;
-	//PQfinish(conn);
 }
 
 
@@ -79,6 +72,8 @@ int DBFunctions::connect(string c){
 
 void DBFunctions::executeRemoteQuery(string query, DataReturn *data_return,  bool print){
 
+	gettimeofday(&data_return->start_execution_time, NULL);
+
 	using namespace boost;
 
 	Config *cfg = Config::getInstance();
@@ -95,13 +90,13 @@ void DBFunctions::executeRemoteQuery(string query, DataReturn *data_return,  boo
 		item->id = cfg->getId();
 		thread_item->item = *item;
 		thread_item->data_return = data_return;
-		pthread_mutex_lock(&count_mutex);
-		in_execution_queries++;
-		pthread_mutex_unlock(&count_mutex);
-		data_return->dbfunction = this; 
+		data_return->dbfunction = this;
 		pthread_create(&t[i], NULL, &DBFunctions::executeRemote, thread_item);
 	}
-
+	for(int i = 0; i < vsize; i++){
+		pthread_join(t[i], NULL);
+	}
+	
 }
 
 
@@ -112,12 +107,12 @@ void *DBFunctions::executeRemote(void *arg){
 	ThreadExecutionItem *te = static_cast<ThreadExecutionItem *>(arg);
 
 	Item item = te->item;
+
 	DataReturn *data_return = te->data_return;
 
 	DBFunctions *db = new DBFunctions();
 
 	db->connect(item.conn_string);
-
 
 	gettimeofday(&start, NULL);
 
@@ -125,30 +120,29 @@ void *DBFunctions::executeRemote(void *arg){
 
 	gettimeofday(&end, NULL);
 	
-	double total = ((( end.tv_sec - start.tv_sec ) *1000000L)
-             + ((double)( end.tv_usec - start.tv_usec )))/1000000L;
-
+	double total = Utils::timeDiff(start, end);
 
 	
 	item.records_returned = PQntuples(query);
+
 	gettimeofday(&start, NULL);
 
 	item.table = new Table();
-	
+
 	db->loadTable(query, item.table);
+
 	gettimeofday(&end, NULL);
 
-	total = ((( end.tv_sec - start.tv_sec ) *1000000L)
-	+ ((double)( end.tv_usec - start.tv_usec )))/1000000L;
+	total = Utils::timeDiff(start, end);
+
 	item.local_process_time = total;
 
-
-
-	(static_cast<DBFunctions *>(data_return->dbfunction))->finishExecutionQuery();
-
+	//Time to 
+	pthread_mutex_lock(&item_mutex);
+	values++;
 	data_return->items.push_back(item);
+	pthread_mutex_unlock(&item_mutex);
 
-	free(query);
 	return NULL;
 
 }
@@ -160,10 +154,6 @@ void DBFunctions::loadTable(PGresult *query, Table *t){
         int nFields = PQnfields(query);
 	char *tst;
 
-	
-
-
-	//Table *t = data_return->table;
 
         FieldDesc *fd = new FieldDesc();
         for(j = 0; j < nFields; j++){
@@ -174,7 +164,6 @@ void DBFunctions::loadTable(PGresult *query, Table *t){
                 t->header.push_back(*fd);
         }
 
-	free(fd);
 	
         for (i = 0; i < nTuples; i++){
                 Record *rr = new Record();

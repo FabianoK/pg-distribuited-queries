@@ -6,6 +6,14 @@
 
 using namespace std;
 
+
+double Utils::timeDiff(struct timeval start, struct timeval end){
+
+	return ((( end.tv_sec - start.tv_sec ) *1000000L)
+             + ((double)( end.tv_usec - start.tv_usec )))/1000000L;
+
+}
+
 bool Utils::confirmMessage(string msg, bool confirm_all){
 	if(confirm_all){
         	cout << msg +" [Y\\n]: Y" <<endl;

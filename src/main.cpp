@@ -9,6 +9,7 @@
 #include <boost/range/adaptor/map.hpp>
 
 using namespace std;
+void executeQueries(string);
 
 int organizeArgs(int argc, char **argv){
 	char *tmp;
@@ -59,12 +60,22 @@ int main(int argc, char **argv){
 		}
 	}
 
+	vector<string> queries = Utils::queriesToTest();
+	int size = queries.size();
 
+	for(int i = 0; i < size; i++){
+		cout << "Executando querie "+queries[i] << endl;
+		executeQueries(queries[i]);
+	}
+
+
+
+}
+
+void executeQueries(string query){
 
 	DBFunctions *db = new DBFunctions();
 
-	vector<string> queries = Utils::queriesToTest();
-	int size = queries.size();
 
 
 	DataReturn *ret = new DataReturn();	
@@ -72,14 +83,9 @@ int main(int argc, char **argv){
 
 	ret->table = tm;
 		
-	for(int i = 0; i < size; i++){
-		cout << "Executando querie "+queries[i] << endl;
-		db->executeRemoteQuery(queries[i], ret, false);
-	}
+	db->executeRemoteQuery(query, ret, false);
 
 
-
-	db->waitingQueryExecution();
 
 	vector<Item> values = ret->items;
 	
@@ -87,29 +93,32 @@ int main(int argc, char **argv){
 	vector<FieldDesc> f = values[0].table->header;	
 	int hsize = (int)f.size();
 
+
 	for(int i = 0;i < hsize; i++)
 		cout << f[i].name << "|" << f[i].type << "|" << f[i].size << ";";
 
 	cout << endl;
 
+	vector<Record> merge =  db->merge(ret);
+	
+	for(int k = 0; k < (int)merge.size(); k++){
+		for(int kk = 0; kk < (int)merge[k].fields.size(); kk++)
+			cout << merge[k].fields[kk] << "|";
+
+		cout << endl;
+	}
+		
+	
+	
+
+	cout << "TOTAL SIZE: " << merge.size() << endl;
 
 	for(int i=0; i < vsize; i++){
 		Item it = values[i];
 		string host = it.conn_string.substr(0, it.conn_string.find(" user="));
 		cout << host << ";"<< it.execution_time << ";" << it.local_process_time << ";" << it.records_returned << endl;
 	}
-	/*
-	BOOST_FOREACH(string s, values | boost::adaptors::map_keys) {
-		cout <<  s << " Valor\n";
-		TestList tl = values[s];
-		vector<ItemList> il = tl.values;
-		for(int i = 0; i < (int)il.size(); i++){
-			string host = il[i].host.substr(0, il[i].host.find(" user="));
-			cout << il[i].table->records.size() << ";"<< il[i].records_returned <<  ";"<< il[i].execution_time << ";" << il[i].local_process_time << ";"<< host << ";"<< il[i].id << endl;
-			//cout << "TABLE TOTAL SIZE: "<<  il[i].table->records.size() << " TABLE SIZE: "<< il[i].records_returned <<  " EX. TIME: "<< il[i].execution_time << " TIME LOCAL: " << il[i].local_process_time << " HOST: "<< host << " ID: "<< il[i].id << endl;
-		}
-	}
-	*/
+
 	free(tm);
 	free(ret);
 }

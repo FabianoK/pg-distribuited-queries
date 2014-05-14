@@ -9,6 +9,11 @@ using namespace std;
 
 Config* Config::conf = NULL;
 
+Config::~Config(){
+	conf = NULL;
+	
+}
+
 Config::Config(){
 	id=0;
 	setConfig();
