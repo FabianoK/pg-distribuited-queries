@@ -37,6 +37,42 @@ void DBFunctions::sort(vector<Record> *table){
 	std::sort(table->begin(), table->end(), orderInt);
 }
 
+vector<Record> DBFunctions::join(vector<Record> left, vector<Record> right, int idx_l, int idx_r){
+	int left_size = (int)left.size();
+	int right_size = (int)right.size();
+	int j = 0;
+	bool first;
+	
+	cout << "INICIANDO - " << endl;
+	for(int i = 0; i < left_size; i++){
+		first = true;
+		while(left[i].fields[idx_l] == right[j].fields[idx_r])
+		{
+			if(first){
+				cout << 1<< " " << j << endl;
+				left[i].fields.insert(left[i].fields.begin()+j, right[j].fields.begin(), right[j].fields.end());
+				first = false;
+				cout << 2<< endl;
+			}else{
+				cout << 3<< endl;
+				Record *rec = new Record();
+				rec->fields = left[i].fields;
+				rec->fields.insert(rec->fields.end(), right[j].fields.begin(), right[j].fields.end());
+				left.push_back(*rec);
+				left.insert(left.begin() + i, *rec);
+				i++;
+				cout << 4<< endl;
+				
+			}
+			j++;
+			if(j == right_size)
+				break;
+		}
+	}
+	cout << " - END" << endl;
+	return left;
+}
+
 vector<Record> DBFunctions::merge(DataReturn *ret){
 
 	int vsize = (int)ret->items.size();

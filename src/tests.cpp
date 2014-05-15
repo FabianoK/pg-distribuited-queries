@@ -76,13 +76,20 @@ int Tests::removeAll(){
 
 	string del = "delete from test";
 	db->executeQuery(del.c_str(), false);
+	del = " alter SEQUENCE test_test_id_seq restart with 1";
+	db->executeQuery(del.c_str(), false);
 	cout << "Clead table test" << endl;
 
+
 	del = "delete from test_child_1";
+	db->executeQuery(del.c_str(), false);
+	del = " alter SEQUENCE test_child_1_teste_child_1_id_seq restart with 1";
 	db->executeQuery(del.c_str(), false);
 	cout << "Clead table child 1" << endl;
 
 	del = "delete from test_child_multi_col";
+	db->executeQuery(del.c_str(), false);
+	del = " alter SEQUENCE test_child_multi_col_teste_child_multi_col_id_seq restart with 1";
 	db->executeQuery(del.c_str(), false);
 	cout << "Clead table child multi" << endl;
 

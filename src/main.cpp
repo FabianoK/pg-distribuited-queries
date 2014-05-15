@@ -10,6 +10,7 @@
 
 using namespace std;
 void executeQueries(string);
+void printValues(vector<Item>, vector<Record>);
 
 int organizeArgs(int argc, char **argv){
 	char *tmp;
@@ -80,18 +81,61 @@ void executeQueries(string query){
 
 	DataReturn *ret = new DataReturn();	
 	Table *tm = new Table();
-
 	ret->table = tm;
+
+	DataReturn *ret1 = new DataReturn();	
+	Table *tm1 = new Table();
+	ret1->table = tm1;
+		
+
 		
 	db->executeRemoteQuery(query, ret, false);
 
-
+	vector<Record> merge =  db->merge(ret);
 
 	vector<Item> values = ret->items;
+
+	printValues(values, merge);
+
+
+	string in;
+
+	for(int i = 0; i < (int)merge.size(); i++){
+		in += merge[i].fields[0] + ",";
+	}
+
+	string sql = "select * from test_child_1 where key_parent in ("+in+"0)";
+
+	cout << sql << endl;
+
+	db->executeRemoteQuery(sql, ret1, false);
+
+	vector<Record> merge1 =  db->merge(ret1);
+
+	printValues(values, merge1);
+
+	merge = db->join(merge, merge1, 0, 1);
+
+
+	values = ret1->items;
+
+	printValues(values, merge);
+
+	free(tm);
+	free(ret);
+}
+
+void printValues(vector<Item> values, vector<Record> merge){
 	
 	int vsize = (int)values.size();
 	vector<FieldDesc> f = values[0].table->header;	
 	int hsize = (int)f.size();
+
+
+	for(int i = 0; i < 100; i++)
+		cout << "#";
+
+	cout << endl;
 
 
 	for(int i = 0;i < hsize; i++)
@@ -99,16 +143,18 @@ void executeQueries(string query){
 
 	cout << endl;
 
-	vector<Record> merge =  db->merge(ret);
-	cout << "START ORDER" << endl;
-	db->sort(&merge);
-	cout << "END ORDER" << endl;
+
+
+	//vector<Record> merge =  db->merge(ret);
+	//cout << "START ORDER" << endl;
+	//db->sort(&merge);
+	//cout << "END ORDER" << endl;
 	
 	for(int k = 0; k < (int)merge.size(); k++){
-		//for(int kk = 0; kk < (int)merge[k].fields.size(); kk++)
-		//	cout << merge[k].fields[kk] << "|";
+		for(int kk = 0; kk < (int)merge[k].fields.size(); kk++)
+			cout << merge[k].fields[kk] << "|";
 
-		//cout << endl;
+		cout << endl;
 	}
 		
 	
@@ -122,6 +168,4 @@ void executeQueries(string query){
 		cout << host << ";"<< it.execution_time << ";" << it.local_process_time << ";" << it.records_returned << endl;
 	}
 
-	free(tm);
-	free(ret);
 }
