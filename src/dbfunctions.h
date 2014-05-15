@@ -29,4 +29,5 @@ class DBFunctions{
 		int finishExecutionQuery();
 		void loadTable(PGresult *, Table *);
 		vector<Record> merge(DataReturn *ret);
+		void sort(vector<Record> *);
 };

@@ -100,12 +100,15 @@ void executeQueries(string query){
 	cout << endl;
 
 	vector<Record> merge =  db->merge(ret);
+	cout << "START ORDER" << endl;
+	db->sort(&merge);
+	cout << "END ORDER" << endl;
 	
 	for(int k = 0; k < (int)merge.size(); k++){
-		for(int kk = 0; kk < (int)merge[k].fields.size(); kk++)
-			cout << merge[k].fields[kk] << "|";
+		//for(int kk = 0; kk < (int)merge[k].fields.size(); kk++)
+		//	cout << merge[k].fields[kk] << "|";
 
-		cout << endl;
+		//cout << endl;
 	}
 		
 	

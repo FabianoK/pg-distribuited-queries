@@ -22,6 +22,21 @@ void DBFunctions::acceptRemote(){
 
 }
 
+struct orderInt{
+  	bool operator() (Record r,  Record rr) { 
+		char *i, *j;
+		i = (char *)r.fields[1].c_str();
+		j = (char *)rr.fields[1].c_str();
+		return (i < j);
+	}
+
+} orderInt;
+
+
+void DBFunctions::sort(vector<Record> *table){
+	std::sort(table->begin(), table->end(), orderInt);
+}
+
 vector<Record> DBFunctions::merge(DataReturn *ret){
 
 	int vsize = (int)ret->items.size();
@@ -149,7 +164,7 @@ void *DBFunctions::executeRemote(void *arg){
 
 void DBFunctions::loadTable(PGresult *query, Table *t){
 
-	int i, j, k=0;
+	int i, j;
         int nTuples = PQntuples(query);
         int nFields = PQnfields(query);
 	char *tst;
@@ -168,7 +183,6 @@ void DBFunctions::loadTable(PGresult *query, Table *t){
         for (i = 0; i < nTuples; i++){
                 Record *rr = new Record();
                 for(j = 0; j < nFields; j++){
-                        k++;
                         tst = PQgetvalue(query, i, j);
                         rr->fields.push_back(tst);
                 }
