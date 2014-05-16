@@ -100,7 +100,7 @@ int Tests::removeAll(){
 void Tests::insertTest(int size){
 
 	this->parentSize = size - 1;
-
+	cout << size << endl;
 	if(!confirmMessage("test"))
 		return;
 

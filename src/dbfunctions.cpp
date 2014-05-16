@@ -42,36 +42,40 @@ vector<Record> DBFunctions::join(vector<Record> left, vector<Record> right, int 
 	int left_size = (int)left.size();
 	int right_size = (int)right.size();
 	int j = 0;
-	int inc = 0;
-	bool first;
+	vector<Record> ret;
 
 	
-	for(int i = 0; i < left_size + inc; i++){
+	for(int i = 0; i < left_size; i++){
+
+		Record *rec = new Record();
+
+		*rec = left[i];
+
+		if(j < right_size){
+			if(left[i].fields[idx_l] == right[j].fields[idx_r]){
+				rec->fields.insert(rec->fields.end(), right[j].fields.begin(), right[j].fields.end());
+				j++;
+			}
+			ret.push_back(*rec);
+		}else{
+			ret.push_back(*rec);
+			continue;
+		}
 
 		if(j >= right_size)
-			break;
+			continue;
 
-		first = true;
-
-		while(left[i].fields[idx_l] == right[j].fields[idx_r])
-		{
-			if(first){
-				left[i].fields.insert(left[i].fields.end(), right[j].fields.begin(), right[j].fields.end());
-				first = false;
-			}else{
-				Record *rec = new Record();
-				rec->fields = left[i].fields;
-				rec->fields.insert(rec->fields.end(), right[j].fields.begin(), right[j].fields.end());
-				left.push_back(*rec);
-				//left.insert(left.begin() + i, *rec);
-				//inc++;
-			}
+		while(left[i].fields[idx_l] == right[j].fields[idx_r]){
+			rec = new Record();
+			*rec = left[i];
+			rec->fields.insert(rec->fields.end(), right[j].fields.begin(), right[j].fields.end());
+			ret.push_back(*rec);
 			j++;
 			if(j >= right_size)
-				break;;
+				break;
 		}
 	}
-	return left;
+	return ret;
 }
 
 vector<Record> DBFunctions::merge(DataReturn *ret){
@@ -174,14 +178,16 @@ void *DBFunctions::executeRemote(void *arg){
 	
 	double total = Utils::timeDiff(start, end);
 
+	item.execution_time = total;
 	
 	item.records_returned = PQntuples(query);
 
 	gettimeofday(&start, NULL);
 
 	item.table = new Table();
-
+	cout << "START LOAD" << endl;
 	db->loadTable(query, item.table);
+	cout << "END LOAD" << endl;
 
 	gettimeofday(&end, NULL);
 
