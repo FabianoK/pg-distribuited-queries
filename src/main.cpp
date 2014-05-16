@@ -99,12 +99,18 @@ void executeQueries(string query){
 
 
 	string in;
+	string sql;
 
-	for(int i = 0; i < (int)merge.size(); i++){
-		in += merge[i].fields[0] + ",";
-	}
+	if((int)merge.size() < 1000){
+		for(int i = 0; i < (int)merge.size(); i++){
+			in += merge[i].fields[0] + ",";
+		}
 
-	string sql = "select * from test_child_1 where key_parent in ("+in+"0)";
+		sql = "select * from test_child_1 where key_parent in ("+in+"0) order by key_parent";
+
+	}else
+		sql = "select * from test_child_1 order by key_parent";
+
 
 	cout << sql << endl;
 
@@ -143,12 +149,6 @@ void printValues(vector<Item> values, vector<Record> merge){
 
 	cout << endl;
 
-
-
-	//vector<Record> merge =  db->merge(ret);
-	//cout << "START ORDER" << endl;
-	//db->sort(&merge);
-	//cout << "END ORDER" << endl;
 	
 	for(int k = 0; k < (int)merge.size(); k++){
 		for(int kk = 0; kk < (int)merge[k].fields.size(); kk++)

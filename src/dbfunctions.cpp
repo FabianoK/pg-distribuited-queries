@@ -23,6 +23,7 @@ void DBFunctions::acceptRemote(){
 }
 
 struct orderInt{
+	int idx;
   	bool operator() (Record r,  Record rr) { 
 		char *i, *j;
 		i = (char *)r.fields[1].c_str();
@@ -41,35 +42,35 @@ vector<Record> DBFunctions::join(vector<Record> left, vector<Record> right, int 
 	int left_size = (int)left.size();
 	int right_size = (int)right.size();
 	int j = 0;
+	int inc = 0;
 	bool first;
+
 	
-	cout << "INICIANDO - " << endl;
-	for(int i = 0; i < left_size; i++){
+	for(int i = 0; i < left_size + inc; i++){
+
+		if(j >= right_size)
+			break;
+
 		first = true;
+
 		while(left[i].fields[idx_l] == right[j].fields[idx_r])
 		{
 			if(first){
-				cout << 1<< " " << j << endl;
-				left[i].fields.insert(left[i].fields.begin()+j, right[j].fields.begin(), right[j].fields.end());
+				left[i].fields.insert(left[i].fields.end(), right[j].fields.begin(), right[j].fields.end());
 				first = false;
-				cout << 2<< endl;
 			}else{
-				cout << 3<< endl;
 				Record *rec = new Record();
 				rec->fields = left[i].fields;
 				rec->fields.insert(rec->fields.end(), right[j].fields.begin(), right[j].fields.end());
 				left.push_back(*rec);
-				left.insert(left.begin() + i, *rec);
-				i++;
-				cout << 4<< endl;
-				
+				//left.insert(left.begin() + i, *rec);
+				//inc++;
 			}
 			j++;
-			if(j == right_size)
-				break;
+			if(j >= right_size)
+				break;;
 		}
 	}
-	cout << " - END" << endl;
 	return left;
 }
 

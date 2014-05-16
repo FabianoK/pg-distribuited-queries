@@ -19,4 +19,5 @@ class Tests{
 		DBFunctions *db;
 		int removeAll();
 		bool confirmAll;
+		int main_id;
 };

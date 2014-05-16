@@ -106,11 +106,11 @@ void Tests::insertTest(int size){
 
 	string query;
 	string tmp;
-	string insert("insert into test (value_string,  val_int, val_float, val_timestamp)");	
+	string insert("insert into test (test_id, value_string,  val_int, val_float, val_timestamp)");	
 
 	for(int i = 0; i < size; i++){
 		char values[1000];
-		sprintf(values, "('valor-%i', %i, %f, now())", i, i, ((float)i/size));
+		sprintf(values, "(%i, 'valor-%i', %i, %f, now())", main_id++, i, i, ((float)i/size));
 		string query(values);
 		tmp = tmp + query;
 		if((i % 500) == 0 || (i + 1) == size){
