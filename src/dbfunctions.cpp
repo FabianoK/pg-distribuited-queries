@@ -94,39 +94,19 @@ vector<Record> DBFunctions::merge(DataReturn *ret){
 	return join;
 }
 
-PGresult *DBFunctions::executeQuery(string query, bool print){
+PGresult *DBFunctions::executeQuery(string query, string conn_string){
 	PGresult *res;
-	res = PQexec(conn, query.c_str());
+	res = PQexec(conn.getConnection(conn_string), query.c_str());
 	ExecStatusType status = PQresultStatus(res);
 	if (status != PGRES_COMMAND_OK && status != PGRES_TUPLES_OK){
 		cout << "ERROR: ";
-		cout << PQerrorMessage(conn) << endl;
+		cout << PQerrorMessage(conn.getConnection(conn_string)) << endl;
 	}
 
 	return res;
 }
 
-
-int DBFunctions::connect(){
-	Config *cfg = Config::getInstance();
-	return connect(cfg->getDBConfig().c_str());
-}
-
-int DBFunctions::connect(string c){
-
-	int result; 
-	conn = PQconnectdb(c.c_str());
-	result = PQstatus(conn);
-	if(result != CONNECTION_OK) 
-		cout << "Connection not established: "<< PQerrorMessage(conn) << endl;
-	
-	return result;
-
-}
-
-
-
-void DBFunctions::executeRemoteQuery(string query, DataReturn *data_return,  bool print){
+void DBFunctions::executeRemoteQuery(string query, DataReturn *data_return){
 
 	gettimeofday(&data_return->start_execution_time, NULL);
 
@@ -146,7 +126,6 @@ void DBFunctions::executeRemoteQuery(string query, DataReturn *data_return,  boo
 		item->id = cfg->getId();
 		thread_item->item = *item;
 		thread_item->data_return = data_return;
-		data_return->dbfunction = this;
 		pthread_create(&t[i], NULL, &DBFunctions::executeRemote, thread_item);
 	}
 	for(int i = 0; i < vsize; i++){
@@ -166,13 +145,13 @@ void *DBFunctions::executeRemote(void *arg){
 
 	DataReturn *data_return = te->data_return;
 
-	DBFunctions *db = new DBFunctions();
+	DBFunctions *db = static_cast<DBFunctions *>(te->data_return->dbfunction);
 
-	db->connect(item.conn_string);
+	//db->connect(item.conn_string);
 
 	gettimeofday(&start, NULL);
 
-	PGresult *query = db->executeQuery(te->data_return->query, false);
+	PGresult *query = db->executeQuery(te->data_return->query, item.conn_string);
 
 	gettimeofday(&end, NULL);
 	

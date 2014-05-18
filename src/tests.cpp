@@ -43,15 +43,14 @@ void Tests::insertValues(){
 				continue;	
 
 		}
-		this->db->connect(dbs[i]);
 		int rec_size = atoi(c->getConfig("size_table_test").c_str());
-		this->insertTest(rec_size * adjust_size);
+		this->insertTest(rec_size * adjust_size, dbs[i]);
 		rec_size = atoi(c->getConfig("size_table_test_child_1").c_str());
-		this->insertChild1 (rec_size * adjust_size);
+		this->insertChild1 (rec_size * adjust_size, dbs[i]);
 		rec_size = atoi(c->getConfig("size_table_test_child_blob").c_str());
-		this->insertBlob(rec_size * adjust_size);
+		this->insertBlob(rec_size * adjust_size, dbs[i]);
 		rec_size = atoi(c->getConfig("size_table_test_child_multi_col").c_str());
-		this->insertMulti(rec_size * adjust_size);
+		this->insertMulti(rec_size * adjust_size, dbs[i]);
 	}
 }
 
@@ -61,43 +60,42 @@ int Tests::removeValues(){
 	vector<string> dbs = c->getRemoteDatabases();
 	int size = dbs.size();
 	for(int i = 0; i < size; i++){
-		this->db->connect(dbs[i]);
 		string host = dbs[i].substr(0, dbs[i].find(" user="));
 		if(Utils::confirmMessage("Remove data in all tables? To conn "+host, this->confirmAll))
-			this->removeAll();
+			this->removeAll(dbs[i]);
 	}
 	return 0;
 
 }
 
-int Tests::removeAll(){
+int Tests::removeAll(string conn){
 
 	int ret = 0;
 
 	string del = "delete from test";
-	db->executeQuery(del.c_str(), false);
+	db->executeQuery(del.c_str(), conn);
 	del = " alter SEQUENCE test_test_id_seq restart with 1";
-	db->executeQuery(del.c_str(), false);
+	db->executeQuery(del.c_str(), conn);
 	cout << "Clead table test" << endl;
 
 
 	del = "delete from test_child_1";
-	db->executeQuery(del.c_str(), false);
+	db->executeQuery(del.c_str(), conn);
 	del = " alter SEQUENCE test_child_1_teste_child_1_id_seq restart with 1";
-	db->executeQuery(del.c_str(), false);
+	db->executeQuery(del.c_str(), conn);
 	cout << "Clead table child 1" << endl;
 
 	del = "delete from test_child_multi_col";
-	db->executeQuery(del.c_str(), false);
+	db->executeQuery(del.c_str(), conn);
 	del = " alter SEQUENCE test_child_multi_col_teste_child_multi_col_id_seq restart with 1";
-	db->executeQuery(del.c_str(), false);
+	db->executeQuery(del.c_str(), conn);
 	cout << "Clead table child multi" << endl;
 
 	return ret;
 }
 
 
-void Tests::insertTest(int size){
+void Tests::insertTest(int size, string conn){
 
 	this->parentSize = size - 1;
 	cout << size << endl;
@@ -115,7 +113,7 @@ void Tests::insertTest(int size){
 		tmp = tmp + query;
 		if((i % 500) == 0 || (i + 1) == size){
 			query = insert + "values" +tmp;
-			if(PQresultStatus(db->executeQuery(query.c_str(), false)) != PGRES_COMMAND_OK)
+			if(PQresultStatus(db->executeQuery(query.c_str(), conn)) != PGRES_COMMAND_OK)
 				return;
 			tmp ="";
 			cout << "\rInserting record: " << i;
@@ -127,7 +125,7 @@ void Tests::insertTest(int size){
 	cout << endl;
 }
 
-void Tests::insertChild1(int size){
+void Tests::insertChild1(int size, string conn){
 
 	if(!confirmMessage("test_child_1"))
 		return;
@@ -144,7 +142,7 @@ void Tests::insertChild1(int size){
 		tmp = tmp + query;
 		if((i % 500) == 0 || (i + 1) == size){
 			query = insert + "values" +tmp;
-			if(PQresultStatus(db->executeQuery(query.c_str(), false)) != PGRES_COMMAND_OK)
+			if(PQresultStatus(db->executeQuery(query.c_str(), conn)) != PGRES_COMMAND_OK)
 				return;
 			tmp ="";
 			cout << "\rInserting record: " << i;
@@ -156,11 +154,11 @@ void Tests::insertChild1(int size){
 	cout << endl;
 }
 
-void Tests::insertBlob(int size){
+void Tests::insertBlob(int size, string conn){
 
 }
 
-void Tests::insertMulti(int size){
+void Tests::insertMulti(int size, string conn){
 	if(!confirmMessage("test_multi"))
 		return;
 
@@ -182,7 +180,7 @@ void Tests::insertMulti(int size){
 		tmp = tmp + query;
 		if((i % 500) == 0 || (i + 1) == size){
 			query = insert + "values" +tmp;
-			if(PQresultStatus(db->executeQuery(query.c_str(), false)) != PGRES_COMMAND_OK)
+			if(PQresultStatus(db->executeQuery(query.c_str(), conn)) != PGRES_COMMAND_OK)
 				return;
 			tmp ="";
 			cout << "\rInserting record: " << i;

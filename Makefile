@@ -2,7 +2,7 @@ CC=g++
 CFLAGS=-c -Wall
 LIB=-lpqxx -lpq -lpthread -lrt -g 
 INC=-I/usr/include/postgresql
-SOURCES=src/config.cpp src/main.cpp src/dbfunctions.cpp src/utils.cpp src/tests.cpp
+SOURCES=src/config.cpp src/main.cpp src/dbfunctions.cpp src/utils.cpp src/tests.cpp src/connection.cpp
 
 EXECUTABLE=sharding
 OBJECTS=$(SOURCES:.cpp=.o)

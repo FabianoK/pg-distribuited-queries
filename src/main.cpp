@@ -11,8 +11,8 @@
 #include <boost/range/adaptor/map.hpp>
 
 using namespace std;
-void executeQuery(string);
-void executeTest(string, DBFunctions *, vector<struct timeval> *);
+void executeQuery(string, string);
+void executeTest(string, DBFunctions *, vector<struct timeval> *, string);
 void printValues(vector<Item>, vector<Record>);
 void printResults(vector<Item>, vector<Record>);
 
@@ -66,8 +66,10 @@ int main(int argc, char **argv){
 	}
 
 	vector<string> queries = Utils::queriesToTest();
-/*
+
 	Config *cfg = Config::getInstance();
+
+/*
         cout << cfg->getDBConfig();
 
 	DBFunctions *db = new DBFunctions();
@@ -107,7 +109,7 @@ int main(int argc, char **argv){
 	cout << "TOTAL 2: "<< total << endl;
 */
 
-	executeQuery("select * from test where val_int > 0 and val_int < 600");
+	executeQuery("select * from test where val_int > 0 and val_int < 600", cfg->getDBConfig());
 
 	/*
 	int size = queries.size();
@@ -120,7 +122,7 @@ int main(int argc, char **argv){
 
 }
 
-void executeTest(string query, DBFunctions *db, vector<struct timeval> *v_start){
+void executeTest(string query, DBFunctions *db, vector<struct timeval> *v_start, string conn_string){
 
 
 	struct timeval start;
@@ -131,7 +133,7 @@ void executeTest(string query, DBFunctions *db, vector<struct timeval> *v_start)
 	
 	PGresult *res;
 
-	res = db->executeQuery(query, false);
+	res = db->executeQuery(query, conn_string);
 
 	int nTuples = PQntuples(res);
         int nFields = PQnfields(res);
@@ -159,7 +161,7 @@ void executeTest(string query, DBFunctions *db, vector<struct timeval> *v_start)
 
 }
 
-void executeQuery(string query){
+void executeQuery(string query, string conn_string){
 
 	struct timeval start, end;
 
@@ -179,7 +181,7 @@ void executeQuery(string query){
 
 	gettimeofday(&start, NULL);
 		
-	db->executeRemoteQuery(query, ret, false);
+	db->executeRemoteQuery(query, ret);
 
 	gettimeofday(&end, NULL);
 	double total = Utils::timeDiff(start, end);
@@ -198,19 +200,21 @@ void executeQuery(string query){
 	cout << "START MERGE " << endl;
 	if((int)merge.size() < 5000){
 		for(int i = 0; i < (int)merge.size(); i++){
-			in += merge[i].fields[0] + ",";
+			in += "("+merge[i].fields[0] + "),";
+			//in += merge[i].fields[0] + ",";
 		}
 
-		sql = "select * from test_child_1 where key_parent in ("+in+"0) order by key_parent";
+		//sql = "select * from test_child_1 where key_parent in ("+in+"0) order by key_parent";
+		sql = "select * from (values "+in+" (0)) as t (key), test_child_1 t1 where t1.key_parent = t.key order by key_parent";
 
 	}else
 		sql = "select * from test_child_1 order by key_parent";
 
 	cout << "END MERGE " << endl;
 
-	//cout << sql << endl;
+	cout << sql << endl;
 
-	db->executeRemoteQuery(sql, ret1, false);
+	db->executeRemoteQuery(sql, ret1);
 
 	gettimeofday(&end, NULL);
 	total = Utils::timeDiff(start, end);
@@ -219,7 +223,7 @@ void executeQuery(string query){
 	vector<Record> merge1 =  db->merge(ret1);
 	values = ret1->items;
 
-	//printValues(values, merge1);
+	printValues(values, merge1);
 	printResults(values, merge1);
 
 	//merge = db->join(merge, merge1, 0, 1);
