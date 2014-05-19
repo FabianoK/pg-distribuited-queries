@@ -17,7 +17,7 @@ using namespace std;
 class DBFunctions{
 
 	private:
-		Connection conn;
+		Connection conn_old;
 	public:
 		DBFunctions();
 		~DBFunctions();
@@ -30,4 +30,5 @@ class DBFunctions{
 		vector<Record> merge(DataReturn *ret);
 		vector<Record> join(vector<Record>, vector<Record>, int, int);
 		void sort(vector<Record> *);
+		Connection conn;
 };

@@ -178,9 +178,9 @@ void executeQuery(string query, string conn_string){
 		
 
 	//"select * from test_child_1 t1, test t where t.test_id = t1.key_parent and t.val_int > 0 and t.val_int < 500;"
-
 	gettimeofday(&start, NULL);
 		
+	cout << "EXECUTE REMOTE" << endl;
 	db->executeRemoteQuery(query, ret);
 
 	gettimeofday(&end, NULL);
@@ -197,7 +197,7 @@ void executeQuery(string query, string conn_string){
 	string in;
 	string sql;
 
-	cout << "START MERGE " << endl;
+	//cout << "START MERGE " << endl;
 	if((int)merge.size() < 5000){
 		for(int i = 0; i < (int)merge.size(); i++){
 			in += "("+merge[i].fields[0] + "),";
@@ -210,9 +210,9 @@ void executeQuery(string query, string conn_string){
 	}else
 		sql = "select * from test_child_1 order by key_parent";
 
-	cout << "END MERGE " << endl;
+	//cout << "END MERGE " << endl;
 
-	cout << sql << endl;
+	//cout << sql << endl;
 
 	db->executeRemoteQuery(sql, ret1);
 
@@ -223,7 +223,7 @@ void executeQuery(string query, string conn_string){
 	vector<Record> merge1 =  db->merge(ret1);
 	values = ret1->items;
 
-	printValues(values, merge1);
+	//printValues(values, merge1);
 	printResults(values, merge1);
 
 	//merge = db->join(merge, merge1, 0, 1);

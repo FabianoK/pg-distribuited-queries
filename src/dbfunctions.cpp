@@ -116,7 +116,6 @@ void DBFunctions::executeRemoteQuery(string query, DataReturn *data_return){
 	vector<string> db = cfg->getRemoteDatabases();
 	int vsize = db.size();
 	pthread_t t[100];
-
 	data_return->dbfunction = this;
 	data_return->query = query;
 	for(int i = 0; i < vsize; i++){
@@ -140,17 +139,15 @@ void *DBFunctions::executeRemote(void *arg){
 	struct timeval start, end;
 
 	ThreadExecutionItem *te = static_cast<ThreadExecutionItem *>(arg);
-
 	Item item = te->item;
-
 	DataReturn *data_return = te->data_return;
-
 	DBFunctions *db = static_cast<DBFunctions *>(te->data_return->dbfunction);
 
+	db->conn.getConnection(item.conn_string);
 	//db->connect(item.conn_string);
 
 	gettimeofday(&start, NULL);
-
+	cout <<"EXECUTE " << endl;
 	PGresult *query = db->executeQuery(te->data_return->query, item.conn_string);
 
 	gettimeofday(&end, NULL);
@@ -158,15 +155,14 @@ void *DBFunctions::executeRemote(void *arg){
 	double total = Utils::timeDiff(start, end);
 
 	item.execution_time = total;
-	
 	item.records_returned = PQntuples(query);
 
 	gettimeofday(&start, NULL);
 
 	item.table = new Table();
-	cout << "START LOAD" << endl;
+	//cout << "START LOAD" << endl;
 	db->loadTable(query, item.table);
-	cout << "END LOAD" << endl;
+	//cout << "END LOAD" << endl;
 
 	gettimeofday(&end, NULL);
 
