@@ -2,6 +2,8 @@
 #define _DBTYPES 1
 #include <vector>
 #include <map>
+#include <iostream>
+
 using namespace std;
 
 class FieldDesc{

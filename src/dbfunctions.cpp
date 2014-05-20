@@ -147,7 +147,7 @@ void *DBFunctions::executeRemote(void *arg){
 	//db->connect(item.conn_string);
 
 	gettimeofday(&start, NULL);
-	cout <<"EXECUTE " << endl;
+
 	PGresult *query = db->executeQuery(te->data_return->query, item.conn_string);
 
 	gettimeofday(&end, NULL);

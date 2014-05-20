@@ -3,6 +3,7 @@
 #include "dbfunctions.h"
 #include "utils.h"
 #include "tests.h"
+#include "queries.h"
 #include "data_return.h"
 #include "config.h"
 #include <unistd.h>
@@ -15,6 +16,7 @@ void executeQuery(string, string);
 void executeTest(string, DBFunctions *, vector<struct timeval> *, string);
 void printValues(vector<Item>, vector<Record>);
 void printResults(vector<Item>, vector<Record>);
+int join(string, string, int, int, DBFunctions *);
 
 int organizeArgs(int argc, char **argv){
 	char *tmp;
@@ -69,173 +71,87 @@ int main(int argc, char **argv){
 
 	Config *cfg = Config::getInstance();
 
-/*
-        cout << cfg->getDBConfig();
 
 	DBFunctions *db = new DBFunctions();
-	db->connect(cfg->getDBConfig().c_str());
+	db->conn.loadAllConnection();
 
-	vector<struct timeval> start;
-	struct timeval time1;
+	struct timeval start, end;
+	gettimeofday(&start, NULL);
 
-	gettimeofday(&time1, NULL);
-	start.push_back(time1);
+	join("test", "test_child_1", 0, 1, db);
 
-	executeTest("select * from test_child_1 where key_parent in (1,2,3,4,5)", db, &start);
-	//executeTest("select test_id from test where val_int > 0 and val_int < 600", db, &start);
+	gettimeofday(&end, NULL);
+	double total = Utils::timeDiff(start, end);
 
-	gettimeofday(&time1, NULL);
-	start.push_back(time1);
 
-	//executeTest("select * from test ", db, &start);
-
-	gettimeofday(&time1, NULL);
-	start.push_back(time1);
-
-	cout << endl;
-
-	double total = Utils::timeDiff(start[0], start[1]);
-	cout << "TEMPO TOTAL EXECUCAO: "<< total << endl;
-	total = Utils::timeDiff(start[1], start[2]);
-	cout << "TEMPO TOTAL 2 EXECUCAO: "<< total << endl;
-
-	total = Utils::timeDiff(start[1], start[2]);
-	cout << "TOTAL 1: "<< total << endl;
-
-	total = Utils::timeDiff(start[2], start[3]);
-	cout << "TOTAL 2: "<< total << endl;
-
-	total = Utils::timeDiff(start[3], start[4]);
-	cout << "TOTAL 2: "<< total << endl;
-*/
-
-	executeQuery("select * from test where val_int > 0 and val_int < 600", cfg->getDBConfig());
+	cout<<total<<endl;
+	
+	//executeQuery("select * from test where val_int > 0 and val_int < 600", cfg->getDBConfig());
 
 	/*
 	int size = queries.size();
 	for(int i = 0; i < size; i++){
 		cout << "Executando querie "+queries[i] << endl;
 		executeQuery(queries[i]);
-	}*/
+	}
 
-
+        
+        string sql = "select * from (values "+in+" (0)) as t (key), test_child_1 t1 "+
+                "where t1.key_parent = t.key order by key_parent";
+        */
 
 }
 
-void executeTest(string query, DBFunctions *db, vector<struct timeval> *v_start, string conn_string){
 
+int join(string rquery, string lquery, int ridx, int lidx, DBFunctions *db){
 
-	struct timeval start;
-	gettimeofday(&start, NULL);
-	//v_start->push_back(start);
-	vector<Record> vec;
+	Query *q = new Query();
 
+	q->table = rquery;
+	q->order = "test_id";
+	q->where = "val_int > 0 and val_int < 100";
+
+	string query = q->makeQuery(*q);
+	cout << query << endl;
 	
-	PGresult *res;
-
-	res = db->executeQuery(query, conn_string);
-
-	int nTuples = PQntuples(res);
-        int nFields = PQnfields(res);
-	int i, j;
-
-        char *tst;
-
-	gettimeofday(&start, NULL);
-	//v_start->push_back(start);
-
- 
-        for (i = 0; i < nTuples; i++){
-                Record *rr = new Record();
-                for(j = 0; j < nFields; j++){
-                        tst = PQgetvalue(res, i, j);
-                        rr->fields.push_back(tst);
-                }
-		vec.push_back(*rr);
-        }
-
-
-	gettimeofday(&start, NULL);
-	//v_start->push_back(start);
-
-
-}
-
-void executeQuery(string query, string conn_string){
-
-	struct timeval start, end;
-
-	gettimeofday(&start, NULL);
-	DBFunctions *db = new DBFunctions();
-
 	DataReturn *ret = new DataReturn();	
 	Table *tm = new Table();
 	ret->table = tm;
-
-	DataReturn *ret1 = new DataReturn();	
-	Table *tm1 = new Table();
-	ret1->table = tm1;
-		
-
-	//"select * from test_child_1 t1, test t where t.test_id = t1.key_parent and t.val_int > 0 and t.val_int < 500;"
-	gettimeofday(&start, NULL);
-		
-	cout << "EXECUTE REMOTE" << endl;
 	db->executeRemoteQuery(query, ret);
 
-	gettimeofday(&end, NULL);
-	double total = Utils::timeDiff(start, end);
-	cout << total << endl;
 	vector<Record> merge =  db->merge(ret);
-
 	vector<Item> values = ret->items;
 
-	//printValues(values, merge);
+	printResults(values, merge);
+
+	string in;
+
+	for(int i = 0; i < (int)merge.size(); i++){
+		in += "("+merge[i].fields[ridx] + "),";
+	}
+
+	q->table = lquery;
+	q->order = "key_parent";
+	
+	string sql = "select * from (values "+in+" (0)) as t (key), "+q->table +" t1 "+
+		"where t1.key_parent = t.key order by key_parent";
+
+	ret = new DataReturn();	
+	tm = new Table();
+	ret->table = tm;
+
+	db->executeRemoteQuery(sql, ret);
+
+	merge =  db->merge(ret);
+	values = ret->items;
+
 	printResults(values, merge);
 
 
-	string in;
-	string sql;
-
-	//cout << "START MERGE " << endl;
-	if((int)merge.size() < 5000){
-		for(int i = 0; i < (int)merge.size(); i++){
-			in += "("+merge[i].fields[0] + "),";
-			//in += merge[i].fields[0] + ",";
-		}
-
-		//sql = "select * from test_child_1 where key_parent in ("+in+"0) order by key_parent";
-		sql = "select * from (values "+in+" (0)) as t (key), test_child_1 t1 where t1.key_parent = t.key order by key_parent";
-
-	}else
-		sql = "select * from test_child_1 order by key_parent";
-
-	//cout << "END MERGE " << endl;
-
-	//cout << sql << endl;
-
-	db->executeRemoteQuery(sql, ret1);
-
-	gettimeofday(&end, NULL);
-	total = Utils::timeDiff(start, end);
-	cout << total << endl;
-
-	vector<Record> merge1 =  db->merge(ret1);
-	values = ret1->items;
-
-	//printValues(values, merge1);
-	printResults(values, merge1);
-
-	//merge = db->join(merge, merge1, 0, 1);
 
 
-	//values = ret1->items;
+	return 0;
 
-	//printValues(values, merge);
-	//printResults(values, merge);
-
-	free(tm);
-	free(ret);
 }
 
 void printResults(vector<Item> values, vector<Record> merge){
@@ -278,9 +194,4 @@ void printValues(vector<Item> values, vector<Record> merge){
 
 		cout << endl;
 	}
-		
-	
-	
-
-
 }

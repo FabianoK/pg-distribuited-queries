@@ -5,18 +5,35 @@ pthread_mutex_t conn_mutex;
 int waiting_thread;
 
 PGconn * Connection::getConnection(string conn_string){
-	if(pool.find(conn_string) == pool.end()){
+	if(vpoll.find(conn_string) == vpoll.end()){
 		cout << "LOADING CONNECTION" << endl;
 		loadConnection(conn_string);
 	}
-	return pool[conn_string];
+	return vpoll[conn_string].back();
 }
 
 int Connection::getConnectionSize(){
-	return pool.size();
+	return poll.size();
 }
 
 
+int Connection::loadAllConnection(){
+	int result = 0;
+	Config *cfg = Config::getInstance();
+	vector<string> db = cfg->getRemoteDatabases();
+
+	int vsize = db.size();
+	cout << "SIZE: "<< vsize << endl;
+	for(int i = 0; i < vsize; i++){
+		vpoll[db[i]].push_back(PQconnectdb(db[i].c_str()));
+		result = PQstatus(vpoll[db[i]][0]);
+		if(result != CONNECTION_OK){
+			cout << "Connection not established: "<< PQerrorMessage(vpoll[db[i]][0]) << endl;
+			
+		}
+	}
+
+}
 
 int Connection::loadConnection(string conn_string){
 
@@ -25,7 +42,7 @@ int Connection::loadConnection(string conn_string){
 	waiting_thread++;
 
 	PGconn *th_conn = PQconnectdb(conn_string.c_str());
-	pool[conn_string] = th_conn;
+	poll[conn_string] = th_conn;
 	pthread_mutex_unlock(&conn_mutex);
         result = PQstatus(th_conn);
         if(result != CONNECTION_OK){
@@ -34,21 +51,6 @@ int Connection::loadConnection(string conn_string){
         }
 
 /*
-	int result = 0;
-	Config *cfg = Config::getInstance();
-	vector<string> db = cfg->getRemoteDatabases();
-
-	int vsize = db.size();
-	cout << "SIZE: "<< vsize << endl;
-	for(int i = 0; i < vsize; i++){
-
-		pool[db[i]] = PQconnectdb(db[i].c_str());
-		result = PQstatus(pool[db[i]]);
-		if(result != CONNECTION_OK){
-			cout << "Connection not established: "<< PQerrorMessage(pool[db[i]]) << endl;
-			
-		}
-	}
 */
         return result;
 
