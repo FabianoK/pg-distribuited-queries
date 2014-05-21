@@ -22,20 +22,24 @@ void DBFunctions::acceptRemote(){
 
 }
 
-struct orderInt{
-	int idx;
+typedef struct orderInt{
+	int idxl;
+	int idxr;
   	bool operator() (Record r,  Record rr) { 
 		char *i, *j;
-		i = (char *)r.fields[1].c_str();
-		j = (char *)rr.fields[1].c_str();
+		i = (char *)r.fields[idxl].c_str();
+		j = (char *)rr.fields[idxr].c_str();
 		return (i < j);
 	}
 
 } orderInt;
 
 
-void DBFunctions::sort(vector<Record> *table){
-	std::sort(table->begin(), table->end(), orderInt);
+void DBFunctions::sort(vector<Record> *table, int idxl, int idxr){
+	orderInt oi;
+	oi.idxl = idxl;
+	oi.idxr = idxr;
+	std::sort(table->begin(), table->end(), oi);
 }
 
 vector<Record> DBFunctions::join(vector<Record> left, vector<Record> right, int idx_l, int idx_r){
@@ -55,10 +59,48 @@ vector<Record> DBFunctions::join(vector<Record> left, vector<Record> right, int 
 			if(left[i].fields[idx_l] == right[j].fields[idx_r]){
 				rec->fields.insert(rec->fields.end(), right[j].fields.begin(), right[j].fields.end());
 				j++;
+				ret.push_back(*rec);
+			}
+		}
+		if(j >= right_size)
+			return ret;
+
+		while(left[i].fields[idx_l] == right[j].fields[idx_r]){
+			rec = new Record();
+			*rec = left[i];
+			rec->fields.insert(rec->fields.end(), right[j].fields.begin(), right[j].fields.end());
+			ret.push_back(*rec);
+			j++;
+			if(j >= right_size)
+				return ret;
+		}
+	}
+	return ret;
+}
+
+
+
+vector<Record> DBFunctions::leftJoin(vector<Record> left, vector<Record> right, int idx_l, int idx_r){
+	int left_size = (int)left.size();
+	int right_size = (int)right.size();
+	int j = 0;
+	vector<Record> ret;
+
+	
+	for(int i = 0; i < left_size; i++){
+
+		Record *rec = new Record();
+
+		*rec = left[i];
+
+		if(j < right_size){
+			if(left[i].fields[idx_l] == right[j].fields[idx_r]){
+				rec->fields.insert(rec->fields.end(), right[j].fields.begin(), right[j].fields.end());
+				j++;
 			}
 			ret.push_back(*rec);
 		}else{
-			ret.push_back(*rec);
+			//ret.push_back(*rec);
 			continue;
 		}
 
@@ -160,9 +202,8 @@ void *DBFunctions::executeRemote(void *arg){
 	gettimeofday(&start, NULL);
 
 	item.table = new Table();
-	//cout << "START LOAD" << endl;
+
 	db->loadTable(query, item.table);
-	//cout << "END LOAD" << endl;
 
 	gettimeofday(&end, NULL);
 
@@ -197,7 +238,6 @@ void DBFunctions::loadTable(PGresult *query, Table *t){
                 t->header.push_back(*fd);
         }
 
-	
         for (i = 0; i < nTuples; i++){
                 Record *rr = new Record();
                 for(j = 0; j < nFields; j++){

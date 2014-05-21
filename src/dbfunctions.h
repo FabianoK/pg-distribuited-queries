@@ -29,6 +29,7 @@ class DBFunctions{
 		void loadTable(PGresult *, Table *);
 		vector<Record> merge(DataReturn *ret);
 		vector<Record> join(vector<Record>, vector<Record>, int, int);
-		void sort(vector<Record> *);
+		vector<Record> leftJoin(vector<Record>, vector<Record>, int, int);
+		void sort(vector<Record> *, int, int);
 		Connection conn;
 };

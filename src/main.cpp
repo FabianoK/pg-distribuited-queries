@@ -16,7 +16,7 @@ void executeQuery(string, string);
 void executeTest(string, DBFunctions *, vector<struct timeval> *, string);
 void printValues(vector<Item>, vector<Record>);
 void printResults(vector<Item>, vector<Record>);
-int join(string, string, int, int, DBFunctions *);
+int join(Query, DBFunctions *);
 
 int organizeArgs(int argc, char **argv){
 	char *tmp;
@@ -67,9 +67,9 @@ int main(int argc, char **argv){
 		}
 	}
 
-	vector<string> queries = Utils::queriesToTest();
+	//vector<string> queries = Utils::queriesToTest();
 
-	Config *cfg = Config::getInstance();
+	//Config *cfg = Config::getInstance();
 
 
 	DBFunctions *db = new DBFunctions();
@@ -78,7 +78,12 @@ int main(int argc, char **argv){
 	struct timeval start, end;
 	gettimeofday(&start, NULL);
 
-	join("test", "test_child_1", 0, 1, db);
+	Query *q = new Query("test", "val_int > 0 and val_int < 10", "test_id");
+	q->join("test_child_1", "test_id", "key_parent");
+
+	cout<< q->join_table->table << endl;	
+
+	join(*q, db);
 
 	gettimeofday(&end, NULL);
 	double total = Utils::timeDiff(start, end);
@@ -102,18 +107,41 @@ int main(int argc, char **argv){
 
 }
 
+void printReader(Table *t){
+	vector<FieldDesc> fd = t->header;
 
-int join(string rquery, string lquery, int ridx, int lidx, DBFunctions *db){
+	cout << "H SIZE: "<<fd.size()<<endl;
+	for(int i = 0; i < (int)fd.size(); i++)
+		cout << fd[i].name << endl;
 
-	Query *q = new Query();
+}
 
-	q->table = rquery;
-	q->order = "test_id";
-	q->where = "val_int > 0 and val_int < 100";
 
-	string query = q->makeQuery(*q);
+int fieldIdx(string field_name, vector<Item> values){
+	vector<FieldDesc> fd  = values[0].table->header;	
+	for(int i = 0; i < (int)fd.size(); i++){
+		cout << fd[i].name << " " << field_name << endl;
+		if(fd[i].name == field_name){
+			cout << fd[i].index << endl;
+			return fd[i].index;
+
+		}
+	}
+	return -1;
+
+}
+
+int join(Query q, DBFunctions *db){
+
+	if(q.join_table == NULL){
+		cout << "ERROR JOIN TABLE NOT PRESENT";
+		return -1;
+	}
+
+	string query = q.makeQuery(q);
 	cout << query << endl;
 	
+
 	DataReturn *ret = new DataReturn();	
 	Table *tm = new Table();
 	ret->table = tm;
@@ -122,33 +150,50 @@ int join(string rquery, string lquery, int ridx, int lidx, DBFunctions *db){
 	vector<Record> merge =  db->merge(ret);
 	vector<Item> values = ret->items;
 
-	printResults(values, merge);
 
+	//db->sort(&merge, 0, 0);
+
+	printResults(values, merge);
+	printValues(values, merge);
+
+	
 	string in;
 
+	int idx = fieldIdx(q.key, values);
+
 	for(int i = 0; i < (int)merge.size(); i++){
-		in += "("+merge[i].fields[ridx] + "),";
+		in += "("+merge[i].fields[idx] + "),";
 	}
 
-	q->table = lquery;
-	q->order = "key_parent";
-	
-	string sql = "select * from (values "+in+" (0)) as t (key), "+q->table +" t1 "+
-		"where t1.key_parent = t.key order by key_parent";
+	string sql = "select "+q.join_table->fields+" from (values "+in+" (0)) as t (key), "+
+		q.join_table->table +" t1 "+
+		"where t1."+q.join_table->foreign_key+" = t.key order by key_parent";
 
+
+	
 	ret = new DataReturn();	
 	tm = new Table();
 	ret->table = tm;
 
 	db->executeRemoteQuery(sql, ret);
 
-	merge =  db->merge(ret);
-	values = ret->items;
+	vector<Record> join_merge =  db->merge(ret);
+	vector<Item> join_values = ret->items;
+
+
+	printValues(values, join_merge);
+
+	int idx_f = fieldIdx(q.join_table->foreign_key, join_values);
+
+
+	
+
+
+	vector<Record> join_result = db->join(merge, join_merge, idx, idx_f);
+
 
 	printResults(values, merge);
-
-
-
+	printValues(values, join_result);
 
 	return 0;
 

@@ -13,11 +13,16 @@ class Query{
 		string fields;
 		string where;
 		string order;
-		vector<Query> join;
-		string key_parent;
+		string key;
+		string foreign_key;
+		Query *join_table;
 
 		string makeQuery(Query);
 		string makeJoinQuery(Query, string);
 		Query();
+		Query(string);
+		Query(string, string);
+		Query(string, string, string);
+		Query *join(string, string, string);
 };
 

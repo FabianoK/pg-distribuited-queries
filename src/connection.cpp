@@ -33,6 +33,7 @@ int Connection::loadAllConnection(){
 		}
 	}
 
+	return 0;
 }
 
 int Connection::loadConnection(string conn_string){
