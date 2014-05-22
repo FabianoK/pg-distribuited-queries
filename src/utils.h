@@ -19,7 +19,7 @@ class Utils{
 		static bool confirmMessage(string, bool);
 		static double timeDiff(struct timeval, struct timeval);
 		static void printValues(vector<Item>, vector<Record>);
-		static void printResults(vector<Item>, vector<Record>);
+		static void printResults(vector<ExecutionData>, vector<Record>);
 		static void printResults(Item, vector<Record>);
 		static void printHeader(vector<FieldDesc>);
 	private:

@@ -110,7 +110,7 @@ void Utils::printResults(Item it, vector<Record> merge){
 	cout << host << ";"<< it.statistics.execution_time << ";" << it.statistics.local_process_time << ";" << it.statistics.records_returned << endl;
 }
 
-void Utils::printResults(vector<Item> values, vector<Record> merge){
+void Utils::printResults(vector<ExecutionData> values, vector<Record> merge){
 
         int vsize = (int)values.size();
 
@@ -119,10 +119,9 @@ void Utils::printResults(vector<Item> values, vector<Record> merge){
         cout << "HOST; EXECUTION TIME; LOCAL PROCESS TIME; RECORDS RETURN " << endl;
 
         for(int i=0; i < vsize; i++){
-                Item it = values[i];
-		string host = it.statistics.conn_string.substr(0, it.statistics.conn_string.find(" user="));
-		cout << host << ";"<< it.statistics.execution_time << ";" << it.statistics.local_process_time << 
-		";" << it.statistics.records_returned << endl;
+		string host = values[i].conn_string.substr(0, values[i].conn_string.find(" user="));
+		cout << host << ";"<< values[i].execution_time << ";" << values[i].local_process_time << 
+		";" << values[i].records_returned << endl;
         }
 }
 

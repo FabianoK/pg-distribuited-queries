@@ -64,22 +64,28 @@ int main(int argc, char **argv){
 		}
 	}
 
+	//The program start here
+
+	//Load connections 
 	DBFunctions *db = new DBFunctions();
 	db->conn.loadAllConnection();
 
 	struct timeval start, end;
 	gettimeofday(&start, NULL);
 
+	//Create query	
+
 	Query *q = new Query("test", "val_int > 0 and val_int < 10", "test_id");
 	q->join("test_child_1", "test_id", "key_parent");
 
-	//cout<< q->join_table->table << endl;	
-
-	db->joinQuery(*q);
-
+	//End execution
 	gettimeofday(&end, NULL);
 	double total = Utils::timeDiff(start, end);
 
+
+	Table *t_end = db->joinQuery(*q);
+	Utils::printResults(t_end->statistics, t_end->records);
+	
 
 	cout<<total<<endl;
 	
