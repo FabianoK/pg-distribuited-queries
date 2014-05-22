@@ -5,7 +5,9 @@
 #include "dbfunctions.h"
 #endif
 #include <vector>
+#ifndef _ITEM
 #include "item.h"
+#endif
 #include <unistd.h>
 
 using namespace std;
@@ -13,7 +15,6 @@ using namespace std;
 class DataReturn{
 	public:
 		vector<Item> items;
-		Table *table;
 		string query;
 		struct timeval start_execution_time;
 		struct timeval end_execution_time;

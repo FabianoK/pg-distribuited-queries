@@ -1,3 +1,6 @@
+#ifndef _QUERIES
+#define _QUERIES 1
+#endif
 #ifndef _DBTYPES
 #include "dbtypes.h"
 #endif

@@ -6,4 +6,5 @@
 #define CRITICAL 1
 #define WARNING 2
 #define DEBUG 3
+#define EXECUTION_THREADS 100
 #endif

@@ -103,3 +103,68 @@ string Utils::makeConnectionString(vector<string> vec){
 	
 	return dataConfig;
 }
+
+
+void Utils::printResults(Item it, vector<Record> merge){
+	string host = it.statistics.conn_string.substr(0, it.statistics.conn_string.find(" user="));
+	cout << host << ";"<< it.statistics.execution_time << ";" << it.statistics.local_process_time << ";" << it.statistics.records_returned << endl;
+}
+
+void Utils::printResults(vector<Item> values, vector<Record> merge){
+
+        int vsize = (int)values.size();
+
+        cout << "TOTAL SIZE: " << merge.size() << endl;
+
+        cout << "HOST; EXECUTION TIME; LOCAL PROCESS TIME; RECORDS RETURN " << endl;
+
+        for(int i=0; i < vsize; i++){
+                Item it = values[i];
+		string host = it.statistics.conn_string.substr(0, it.statistics.conn_string.find(" user="));
+		cout << host << ";"<< it.statistics.execution_time << ";" << it.statistics.local_process_time << 
+		";" << it.statistics.records_returned << endl;
+        }
+}
+
+void Utils::printValues(vector<Item> values, vector<Record> merge){
+
+        vector<FieldDesc> f = values[0].table->header;
+
+        int hsize = (int)f.size();
+
+
+        for(int i = 0; i < 100; i++)
+                cout << "#";
+
+        cout << endl;
+
+
+        for(int i = 0;i < hsize; i++)
+                cout << f[i].name << "|" << f[i].type << "|" << f[i].size << ";";
+
+        cout << endl;
+
+
+        for(int k = 0; k < (int)merge.size(); k++){
+                for(int kk = 0; kk < (int)merge[k].fields.size(); kk++)
+                        cout << merge[k].fields[kk] << "|";
+
+                cout << endl;
+        }
+}
+
+/**
+*
+* Print table fields name 
+* @parame Table
+*
+**/
+
+void Utils::printHeader(vector<FieldDesc> fd){
+
+        for(int i = 0; i < (int)fd.size(); i++)
+                cout << fd[i].name << " | ";
+
+        cout << endl;
+
+}

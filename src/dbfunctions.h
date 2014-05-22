@@ -10,14 +10,15 @@
 #include "connection.h"
 #include "data_return.h"
 
+#include "queries.h"
 
 using namespace std;
-
 
 class DBFunctions{
 
 	private:
 		Connection conn_old;
+		int fieldIdx(string, vector<Item>);
 	public:
 		DBFunctions();
 		~DBFunctions();
@@ -30,6 +31,7 @@ class DBFunctions{
 		vector<Record> merge(DataReturn *ret);
 		vector<Record> join(vector<Record>, vector<Record>, int, int);
 		vector<Record> leftJoin(vector<Record>, vector<Record>, int, int);
-		void sort(vector<Record> *, int, int);
+		void sortByInt(vector<Record> *, int);
 		Connection conn;
+		Table *joinQuery(Query);
 };
