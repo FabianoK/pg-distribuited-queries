@@ -27,40 +27,15 @@
 
 \section{Introdução}
 
-Uma modelo de base de dados distribuídas utilizando sistemas de gerenciamento de bancos de dados, SGBDs, relacionais é uma
-ferramenta que provê escalabilidade horizontal em soluções utilizando ferramentas que permitam que agregar 
+Modelos de base de dados distribuídas utilizando sistemas de gerenciamento de bancos de dados, SGBDs, relacionais são
+ferramentas que buscam escalabilidade horizontal em soluções utilizando ferramentas que permitam que agregar 
 as funcionalidades do modelo relacional em uma arquitetura onde a persistência dos dados não é feita em
 uma mesma máquina física ou virtual. Esta abordagem de manutenção dos dados em um ambiente distribuído 
-permite que equipamentos ampliar a capacidade de manipulação e manutenção de dados que compreendem grande
-consumo de recursos computacionais seja realizado por equipamentos com reduzida capacidade de processamento.
-A ampliação do número de usuários e da quantidade de dados mantidos pela infraestrutura corporativa pode
+permite que a infraestutura computacional possa ampliar a capacidade de manipulação e manutenção de dados 
+utilizando equipamentos com reduzida capacidade de processamento e pouca memória.
+A ampliação do número de usuários e da quantidade de dados mantidos no ambiente corporativo pode
 ser redimensionada de acordo com as demandas que venham a surgir ao longo do tempo sem que haja a necessidade
 de dimensionamento prévio de processamento, armazenamento e memória.
-
-Um dos grandes desafios na utilização de SGBDs relacionais distribuídos é a própria concepção
-do modelo que depende do atendimento de premissas concebidas para garantir a integridade dos dados e operações
-que implicam em processos pouco adequados a ambientes distribuídos do ponto de vista do tempo de execução
-das tarefas de persistência das informações. A necessidade de garantia de transações utilizando um único 
-ponto onde são mantidas os registros implicam em confirmações e bloqueios de acesso a determinados dados
-para atender a aspectos de garantia de unicidade das informações. Este modelo de persistência de dados
-foi concebida em um momento em que a computação ainda possuía um grande enfoque em modelos centralizados
-de processamento de dados e atendeu muito bem a maioria das demandas até o início da década de 2000 \cite{kossmann2000state} mas
-com a proposta de maior escalabilidade de recursos de hardware para atendimento pontual das necessidades
-de maneira que não exista superdimensionamento de infraestrutura em decorrência de expectativas que podem
-nem sempre se realizar levantou um questionamento contundente da adequação do modelo centralizado as novas
-demandas das ferramentas de Tecnologia da Informação e Comunicação, TICs.
-
-Neste panorama de questionamento de modelos de persistência de dados em ambientes distribuídos surgiram 
-propostas e ferramentas que tem sido defendidas como mais adequadas que os tradicionais SGBDs relacionas
-denominados com bancos de dados noSQL, \textit{not struturad query language}, em tradução livre não SQL, que foram
-rapidamente aceitos como solução para organizações dotadas de grande demandas de manutenção de informações
-tais como sistemas de busca na Internet e ambientes de redes sociais \cite{cattell2011scalable}. Existem notadas vantagens do ponto
-de vista de utilização destas ferramentas em ambientes distribuídos pois várias delas foram concebidas
-justamente para prover performance nestas arquiteturas tecnológicas e são criadas para prover melhor
-desempenho em situação específicas. Estas ferramentas, no entanto, apresentam um modelo de uso diferenciado
-para cada solução não existindo, como no caso dos bancos de dados relacionais SQL, uma forma relativamente
-semelhante de manipulação de informações, motivo este que impõe grande dependência da aplicação a
-ferramenta escolhida para a persistência dos dados.
 
 Muitas das soluções de software que tem grande dependência da manutenção e recuperação de informações
 em banco de dados foram desenvolvidas utilizando o modelo relacional. Vários dos gestores de projetos 
@@ -71,6 +46,28 @@ bancos de dados. A mudança desta visão de utilização de repositórios sem ba
 implica em uma mudança significativa na abordagem de desenvolvimento de sistemas e pode representar
 necessidades de reimplementação que demanda custos impraticáveis, a curto prazo, para a maioria das
 organizações \cite{Tran_KLF_11}.
+
+O modelo de persistência de dados utilizando o modelo relacional 
+foi concebido em um momento em que a computação ainda possuía um grande enfoque em modelos centralizados
+de processamento de dados e atendeu muito bem a maioria das demandas até o início da década de 2000 \cite{kossmann2000state}.
+A popularização do acesso a rede mundial de computadores, a crescente demanda de geração de informações
+e a incapacidade de previsão acerca da quantidade de dados mantidos por determindos sistemas podem
+proporcionar situação onde o dimensionamento da infraestrutura física tanto pode ficar aquém quanto
+além da real demanda do produto de software projetado. Se altos investimentos em equipamentos sub utilizados
+implicam em disponibilização equivocada de recursos financeiros a incapacidade de atendimento de
+demanda também gera prejuísos de difícil mensuração.
+
+Nos recentes questionamentos sobre modelos de persistência de dados em ambientes distribuídos, surgiram 
+propostas e ferramentas que tem sido defendidas como mais adequadas que os tradicionais SGBDs relacionas
+denominados com bancos de dados noSQL, \textit{not struturad query language}, em tradução livre não somente SQL, que foram
+rapidamente aceitos como solução para organizações dotadas de grande demandas de manutenção de informações
+tais como sistemas de busca na Internet e ambientes de redes sociais \cite{cattell2011scalable}. Existem notadas vantagens do ponto
+de vista de utilização destas ferramentas em ambientes distribuídos pois várias delas foram concebidas
+justamente para prover performance nestas arquiteturas tecnológicas e são criadas para prover melhor
+desempenho em situação específicas. Estas ferramentas, no entanto, apresentam um modelo de uso diferenciado
+para cada solução não existindo, como no caso dos bancos de dados relacionais SQL, uma forma relativamente
+semelhante de manipulação de informações, motivo este que impõe grande dependência da aplicação a
+ferramenta escolhida para a persistência dos dados.
 
 A avaliação do desempenho de modelos distribuídos utilizando banco de dados relacionais é um importante
 fator na decisão na escolha de implementar esta abordagem para a melhoria da qualidade de sistemas
@@ -89,8 +86,8 @@ do uso de bancos de dados relacionais em ambientes distribuídos. A nova abordag
 trabalho propõe que muitos dos sistemas de informação que manipulam informações utilizando SGBDs podem
 ser mantidos sem a necessidade de equipamentos robustos e ma
 
-O objetivo geral deste trabalho é avaliar a possibilidade de uso de bancos de dados relacionais em ambientes distribuídos a 
-partir do uso de consultas distrubuídas. Decorre desta avaliação a necessidade de apresentar instruções SQL e 
+O objetivo geral deste trabalho é apresentar um modelo de uso de bancos de dados relacionais em ambientes distribuídos a 
+partir do uso de sharding e consultas distrubuídas. Decorre deste objetivo a necessidade de apresentar instruções SQL e 
 sequências de execuções que possam ser realizadas em bancos de dados relacionais distribuídos; propor estratégias 
 de consultas que façam a intersecção de dados entre tabelas, consultas \textit{join} e apresentar
 um modelo de implementação com mínimo impacto no desenvolvimento ou migração de aplicações.
@@ -107,9 +104,9 @@ foi utilizado o SGBD PostgreSQL dada sua popularidade, possibilidade de acesso a
 familiaridade dos pesquisadores com a ferramenta. As instruções SQL utilizadas neste trabalho foram
 baseadas nas definições apresentadas por Snodgrass \cite{snodgrass1994tsql2}.
 
-Inicialmente serão avaliados sistemas de informação desenvolvidos ou mantidos pelo Serviço Federal de
-Processamento de Dados, Serpro, 
 
+Para determinar a viabilidade do modelo foi realizado um estudo de caso utilizando a suite de comunicação
+Expresso Livre, 
 
 
 \section{Analise dos dados}
