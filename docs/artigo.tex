@@ -90,11 +90,29 @@ O objetivo geral deste trabalho é apresentar um modelo de uso de bancos de dado
 partir do uso de sharding e consultas distrubuídas. Decorre deste objetivo a necessidade de apresentar instruções SQL e 
 sequências de execuções que possam ser realizadas em bancos de dados relacionais distribuídos; propor estratégias 
 de consultas que façam a intersecção de dados entre tabelas, consultas \textit{join} e apresentar
-um modelo de implementação com mínimo impacto no desenvolvimento ou migração de aplicações.
+um modelo de implementação com mínimo impacto no desenvolvimento ou migração de aplicações;
+avaliar as limitação na utilização deste modelo de arquitetura de banco de dados.
 
 
 
 \section{Trabalhos correlacionados}
+
+O banco de dados Spanner é uma implementação escalável e de alta disponibilidade desenvolvida pelo Google
+focada no gerenciamento de replicação de dados em base de dados heterogeneas. Os dados no Spanner são
+armazenados utilizando esquema de tabelas semi-relacionais promovendo consistência dos dados externos tratando
+leitura e escrita entre as bases de dados\cite{corbett2013spanner}. A abordagem de manutenção de concistência
+dos dados entre diferentes bancos de dados apresenta um dificultador na implementação e manutenção do
+sistema que poderia ser resolvido com o abandono da normalização, utilizando replicação dos dados 
+quando necessário.
+
+No Spammer são criados vários bancos de dados contendo tabelas semelhantes as do modelo relacional
+clássico. O acesso aos dados mantidos pelo sistema utiliza a identificação dos campos das tabelas 
+utilizando o modelo chave-valor, utilizando como identificador chaves primárias. 
+
+O controle de transações no Spanner utiliza uma estratégia focada no cliente utilizando informações 
+relacionadas a um carimbo de tempo e confirmação de atualização por meio de envio de informações
+aos clientes que estão utilizando os dados alterados.
+
 
 \section{Metodologia}
 
@@ -102,18 +120,32 @@ Este trabalho é de caráter exploratório e pretende apresentar um modelo de im
 utilizando bancos de dados relacionais em ambiente distribuído. Para a realização dos experimentos
 foi utilizado o SGBD PostgreSQL dada sua popularidade, possibilidade de acesso ao código fonte, e 
 familiaridade dos pesquisadores com a ferramenta. As instruções SQL utilizadas neste trabalho foram
-baseadas nas definições apresentadas por Snodgrass \cite{snodgrass1994tsql2}.
+baseadas nas definições apresentadas por Snodgrass \cite{snodgrass1994tsql2}. 
+
+Para a implementação da solução foi utilizada a solução Expresso Livre, baseada no Tine 2.0, desenvolvida e 
+mantida pelo Serviço Federal de Processamento de Dados, Serpro, dada sua grande necessidade de escalabilidade 
+devido ao significativo número de usuários, cerca de um milhão, que possivelmente utilizaram a aplicação 
+nos próximos anos. Foi realizado um levantamento de todadas as tabelas utilizadas bem como os relacioanmentos
+entre elas para a identificação de critérios de distribuição dos registros, procurando reduzir a quantidade
+de bancos de dados envolvidos na busca pelos dados. Após a definição das chaves a serem utilizada para 
+a separação dos registros entre as tabelas dos bancos de dados foi definida uma estratégia de migração
+da arquitetura tradicional baseada em uma única máquina ou cluster para o modelo distribuído.
+
+Um estudo relativo a recuperação de dados em bases de dados distintas e representá-las ao usuário como
+se estes estivessem armazenados em um banco de dados tradicional foi apresentado inicialmente como 
+parte da solução de construção de \textit{sharding} de banco de dados relacionais vizando minimizar o 
+impacto na aplicação. Duas opções foram avaliadas para o atendimento deste requisito:
+a desnormalização do banco de dados, gerando todos os registros necessários a realização de consultas
+no mesmo sharding e o desenvolvimento de aplicação capaz de realizar consultas distribuídas.
+
+A avaliação da implementação foi feita utilizando as funcionalidades de acesso ao banco de dados
+em instalação do Expresso Livre avaliando o comportamento do sistema utilizando 
 
 
-Para determinar a viabilidade do modelo foi realizado um estudo de caso utilizando a suite de comunicação
-Expresso Livre, 
+\section{Implementação}
 
-
-\section{Analise dos dados}
-
-As instruções utilizadas nas consultas de teste visam cobrir apenas conjuntos de instruções SQL mais simples
-mas os resultados obtidos permitem suposições de tempo de execução de consultas mais complexas utilizando-se
-modelos que representem cada uma das instruções separadamente.
+Para a construção da solução proposta foi realizado o levantamento das tabelas utilizadas pelo sistema
+e 
 
 %\begin{table}[ht]
 \begin{tabular}{l l}
@@ -166,6 +198,12 @@ MSA & 100K & 0.3 & 0.2 & 0.00 & 0.1 & 0.1  & 0.00 & 0.1 & 0.1 \\
 
 
 \section{Resultados}
+
+O Expresso Livre é um caso em que o uso de sharding utilizando banco de dados relacional obteve
+grande alinhamento tendo em vista que não há necessidade de construção de informações analíticas.
+Quase que a totalidade das operações em banco de dados do sistema possibilitam a realização
+de consultas utilizando o modelo relacional e a linguagem SQL dadas as características do 
+sistema.
 
 
 Utilizar uma arquitetura de servidores heterogênea implica em redução do tempo de execução de todo
